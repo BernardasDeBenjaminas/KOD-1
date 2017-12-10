@@ -10,6 +10,7 @@ namespace KOD_1
 	{
 		static void Main(string[] args)
 		{
+			Console.WriteLine("Initial commit.");
 		}
 	}
 }
