@@ -36,16 +36,20 @@ namespace Logic
 		public static void WriteMatrix(int[][] matrix)
 		{
 			Console.ForegroundColor = ConsoleColor.Cyan;
+			Console.WriteLine();
+
 			var cols = matrix.GetUpperBound(0);
 			var rows = matrix[0].GetUpperBound(0);
 			for (var r = 0; r <= rows; r++)
 			{
 				for (var c = 0; c <= cols; c++)
 				{
-					Console.Write(matrix[c][r]);
+					Console.Write(matrix[c][r] + "  ");
 				}
 				Console.WriteLine();
+				Console.WriteLine();
 			}
+			Console.ForegroundColor = ConsoleColor.Gray;
 		}
 	}
 }

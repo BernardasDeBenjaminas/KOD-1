@@ -8,7 +8,7 @@ namespace Logic
 		private readonly int[][] _matrix;
 		private readonly int _rows; // Number of rows in '_matrix'.
 		private readonly int _cols; // Number of columns in '_matrix'.
-		private readonly bool isTransformableToH;
+		private readonly bool _isTransformableToH;
 
 		// When converting to a standard (H) array.
 		private int _hColFirst;	// Denotes the first column of the H to be matrix.
@@ -19,7 +19,7 @@ namespace Logic
 			_matrix = matrix;
 			_rows = _matrix[0].GetUpperBound(0);
 			_cols = _matrix.GetUpperBound(0);
-			isTransformableToH = IsTransformableToMatrixH();
+			_isTransformableToH = IsTransformableToMatrixH();
 		}
 
 		public int[] EncodeVector(int[] vector)
@@ -71,12 +71,12 @@ namespace Logic
 
 		public MatrixH GetMatrixH()
 		{
-			if (!isTransformableToH)
+			if (!_isTransformableToH)
 				throw new ArgumentException("\nThe current matrix is not transformable to an H matrix.");
 
-			var separatedStandardMatrix = CreateStandardMatrix(_cols - _rows);
+			var standardMatrix = CreateStandardMatrix(_cols - _rows);
 			var separatedOtherMatrix = SeparateOtherMatrix();
-			var matrix = CombineMatrices(separatedStandardMatrix, separatedOtherMatrix);
+			var matrix = CombineMatrices(standardMatrix, separatedOtherMatrix);
 
 			return new MatrixH(matrix);
 		}
