@@ -22,7 +22,7 @@ namespace Logic
 			_isTransformableToH = IsTransformableToMatrixH();
 		}
 
-		public int[] EncodeVector(int[] vector)
+		public int[] Encode(int[] vector)
 		{
 			var result = new int[_cols + 1];
 
@@ -39,6 +39,12 @@ namespace Logic
 			}
 
 			return result;
+		}
+
+		public int[] Decode(int[] vector)
+		{
+			// Todo: complete this function.
+			// Todo: have a variable for keeping a mapping between words and their encoded variants.
 		}
 
 		public bool IsTransformableToMatrixH()

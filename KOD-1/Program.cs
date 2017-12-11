@@ -32,16 +32,14 @@ namespace KOD_1
 			matrix[3] = new int[2] { 1, 1 };
 			matrix[4] = new int[2] { 0, 1 };
 
-			Console.WriteLine("Printing G matrix.");
 			var matrixG = new MatrixG(matrix);
-			matrixG.Display();
+			//matrixG.Display();
 
 			// H = 1 0 1 0 0
 			//     1 1 0 1 0
 			//     0 1 0 0 1
-			Console.WriteLine("Printing H matrix.");
 			var newMatrixH = matrixG.GetMatrixH();
-			newMatrixH.Display();
+			//newMatrixH.Display();
 
 			// Test leaders = 0 0 0 0 0
 			//                0 0 0 0 1
@@ -93,10 +91,12 @@ namespace KOD_1
 			supposed.Clear();
 			supposed = new List<string> { "000", "001" ,"010" ,"100", "011" ,"110" ,"111", "101" };
 
+			ConsoleHelper.WriteWarning("Testing syndromes..");
+
 			for (var i = 0; i < results.Count; i++)
 			{
 				if (results[i] != supposed[i])
-					ConsoleHelper.WriteError($"Failed test in {nameof(Test1)} - syndromes do not match.");
+					ConsoleHelper.WriteError($"Failed test in {nameof(Test1)} - Syndromes are not calculated properly.");
 			}
 
 			ConsoleHelper.WriteInformation($"--- Finished testing in {nameof(Test1)}.");
@@ -104,28 +104,76 @@ namespace KOD_1
 
 		private static void Test2()
 		{
-			//Console.WriteLine();
-			//ConsoleHelper.WriteInformation($"--- Started testing in {nameof(Test2)}.");
+			Console.WriteLine();
+			ConsoleHelper.WriteInformation($"--- Started testing in {nameof(Test2)}.");
+			
+			var matrix = new int[5][];
+			matrix[0] = new int[2] { 1, 0 };
+			matrix[1] = new int[2] { 0, 1 };
+			matrix[2] = new int[2] { 1, 0 };
+			matrix[3] = new int[2] { 1, 1 };
+			matrix[4] = new int[2] { 0, 1 };
 
-			//// G = 1 0 1 1 0
-			////     0 1 0 1 1
-			//var matrix = new int[5][];
-			//matrix[0] = new int[2] { 1, 0 };
-			//matrix[1] = new int[2] { 0, 1 };
-			//matrix[2] = new int[2] { 1, 0 };
-			//matrix[3] = new int[2] { 1, 1 };
-			//matrix[4] = new int[2] { 0, 1 };
+			// G = 1 0 1 1 0
+			//     0 1 0 1 1
+			var matrixG = new MatrixG(matrix);
+			//matrixG.Display();
 
-			//var matrixG = new MatrixG(matrix);
-			////matrixG.Display();
+			var messageToEncode1 = new int[2] {0,0};
+			var messageToEncode2 = new int[2] {1,0};
+			var messageToEncode3 = new int[2] {0,1};
+			var messageToEncode4 = new int[2] {1,1};
 
-			//// H = 1 0 1 0 0
-			////     1 1 0 1 0
-			////     0 1 0 0 1
-			//var newMatrixH = matrixG.GetMatrixH();
-			////newMatrixH.Display();
+			var encodedMessage1 = matrixG.Encode(messageToEncode1);
+			var encodedMessage2 = matrixG.Encode(messageToEncode2);
+			var encodedMessage3 = matrixG.Encode(messageToEncode3);
+			var encodedMessage4 = matrixG.Encode(messageToEncode4);
 
-			//ConsoleHelper.WriteInformation($"--- Finished testing in {nameof(Test2)}.");
+			var encoded1 = string.Join("", encodedMessage1);
+			var encoded2 = string.Join("", encodedMessage2);
+			var encoded3 = string.Join("", encodedMessage3);
+			var encoded4 = string.Join("", encodedMessage4);
+
+			var results = new List<string> { encoded1, encoded2, encoded3, encoded4 };
+			var supposed = new List<string> { "00000", "10110", "01011", "11101" };
+
+			ConsoleHelper.WriteWarning("Testing encoding..");
+
+			for (var i = 0; i < results.Count; i++)
+			{
+				if (results[i] != supposed[i])
+					ConsoleHelper.WriteError($"Failed test in {nameof(Test2)} - Messages are not encoded properly.");
+			}
+
+
+			// H = 1 0 1 0 0
+			//     1 1 0 1 0
+			//     0 1 0 0 1
+			var matrixH = matrixG.GetMatrixH();
+			//matrixH.Display();
+
+			var decodedMessage1 = matrixH.Decode(encodedMessage1);
+			var decodedMessage2 = matrixH.Decode(encodedMessage2);
+			var decodedMessage3 = matrixH.Decode(encodedMessage3);
+			var decodedMessage4 = matrixH.Decode(encodedMessage4);
+
+			var decoded1 = string.Join("", decodedMessage1);
+			var decoded2 = string.Join("", decodedMessage2);
+			var decoded3 = string.Join("", decodedMessage3);
+			var decoded4 = string.Join("", decodedMessage4);
+
+			results.Clear();
+			results = new List<string>{ decoded1, decoded2, decoded3, decoded4 };
+
+			ConsoleHelper.WriteWarning("Testing decoding..");
+
+			for (var i = 0; i < results.Count; i++)
+			{
+				if (results[i] != supposed[i])
+					ConsoleHelper.WriteError($"Failed test in {nameof(Test2)} - Messages are not decoded properly.");
+			}
+
+			ConsoleHelper.WriteInformation($"--- Finished testing in {nameof(Test2)}.");
 		}
 	}
 }

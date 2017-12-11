@@ -33,6 +33,13 @@ namespace Logic
 			Console.ForegroundColor = ConsoleColor.Gray;
 		}
 
+		public static void WriteWarning(string message)
+		{
+			Console.ForegroundColor = ConsoleColor.Yellow;
+			Console.WriteLine(message);
+			Console.ForegroundColor = ConsoleColor.Gray;
+		}
+
 		public static void WriteMatrix(int[][] matrix)
 		{
 			Console.ForegroundColor = ConsoleColor.Cyan;

@@ -25,6 +25,52 @@ namespace Logic
 			FillTable();
 		}
 
+		/// <summary>
+		/// Tries to decode a vector.
+		/// </summary>
+		/// <param name="vector">Vector to decode.</param>
+		/// <returns>A the supposedly decoded vector in a new int[].</returns>
+		public int[] Decode(int[] vector)
+		{
+			// Get the length of the vector.
+			var length = vector.GetUpperBound(0) + 1;
+			// Create the tuple for decoding (it's a vector with only zeroes except in one position).
+			var answer = new int[length];
+
+			for (var i = 0; i < length; i++)
+			{
+				// Initialize it.
+				var tuple = new int[length];
+				// Assign the only '1' it will have for the cycle.
+				tuple[i] = 1;
+				// Calculate the syndrome of the vector.
+				var syndrome = string.Join("", CalculateSyndrome(vector));
+				// Get the weight of the associated syndrome.
+				var weightOfOne = _table[syndrome];
+
+				// It means the vector was not corrupted during transmission and should be taken as is.
+				if (weightOfOne == 0)
+				{
+					answer = vector;
+					break;
+				}
+
+				// Add the vectors together.
+				var addedVectors = AddVectors(tuple, vector);
+				// Calculate the syndrome.
+				syndrome = string.Join("", CalculateSyndrome(addedVectors));
+				// Get the weight of the associated syndrome.
+				var weightOfTwo = _table[syndrome];
+				// If the weight is lower then we set the 'addedVectors' as our new 'Vector'
+				if (weightOfTwo < weightOfOne)
+				{
+					vector = addedVectors;
+				}
+			}
+
+			return answer;
+		}
+
 		public int[] CalculateSyndrome(int[] vector)
 		{
 			var result = new int[_rows + 1];
@@ -172,6 +218,20 @@ namespace Logic
 		public int CalculateWeight(int[] vector)
 		{
 			return vector.Count(number => number != 0);
+		}
+
+		private int[] AddVectors(int[] vector1, int[] vector2)
+		{
+			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
+				throw new Exception("\nThe vectors are of different lengths!");
+
+			var length = vector1.GetUpperBound(0) + 1;
+			var result = new int[length];
+
+			for (var i = 0; i < length; i++)
+				result[i] = (vector1[i] * vector2[i]) % 2;
+
+			return result;
 		}
 
 		public void Display()
