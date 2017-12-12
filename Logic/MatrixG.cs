@@ -1,21 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Logic
 {
 	public class MatrixG
 	{
+		// This is where I'll store words and their encoded meanings.
+		//		Key - encoded;
+		//		Value - original.
+		private readonly Dictionary<string, int[]> _translations = new Dictionary<string, int[]>(); 
 		private readonly int[][] _matrix; // The main matrix.
-		private readonly int _length;	  // Length of the vectors.
-		private readonly int _dimension;  // Number of the vectors.
-
-		private readonly int _rows; // Number of rows in '_matrix'.
+		private readonly int _rows;	// Number of rows in '_matrix'.
 		private readonly int _cols; // Number of columns in '_matrix'.
-		private readonly bool _isTransformableToH;
-
-		// When converting to a standard (H) array (index means value of zero for the first column).
-		private int _indexStandardColFirst; // The index of the column where the standard matrix begins.
-		private int _indexStandardColLast;  // The index of the column where the standard matrix ends.
 
 		/// <summary>
 		/// Returns a new object of type 'MatrixG'.
@@ -31,13 +28,151 @@ namespace Logic
 			if (dimension <= 0)
 				throw new ArgumentException("\nThe dimension cannot be zero or less.");
 
-			_length = length;
-			_dimension = dimension;
+			_rows = dimension;
+			_cols = length;
 
 			if (matrix != null)
 			{
 				_matrix = CheckIfProperMatrixGiven(matrix) ? matrix : GenerateMatrix(length, dimension);
 			}
+		}
+
+
+		// PUBLIC 
+
+		/// <summary>
+		/// Encodes a vector and adds it to it's inner table.
+		/// </summary>
+		/// <param name="vector">The vector to be encoded.</param>
+		/// <returns>An encoded vector.</returns>
+		public int[] Encode(int[] vector)
+		{
+			if (vector.GetUpperBound(0) + 1 != _rows)
+				throw new ArgumentException("\nThe number of columns in the vector must match the number of rows in the matrix!");
+
+			var result = new int[_cols];
+			for (var c = 0; c < _cols; c++)
+			{
+				var matrixCol = GetColumn(_matrix, c);
+				result[c] = MultiplyVectors(matrixCol, vector);
+			}
+			// Add the encoded vector to the table.
+			_translations.Add(string.Join("", result), vector);
+			return result;
+		}
+
+		/// <summary>
+		/// Looks in to its inner table to see if the passed in vector has been encoded before and if it has - it returns it.
+		/// </summary>
+		/// <param name="vector">The vector to be decoded.</param>
+		/// <returns>The decoded vector if one is found, else raises an exception.</returns>
+		public int[] Decode(int[] vector)
+		{
+			if (vector.GetUpperBound(0) + 1 != _cols)
+				throw new ArgumentException("\nThe passed in vector is too long to have been coded with this instance of the matrix!");
+
+			var key = string.Join("", vector);
+
+			if (!_translations.ContainsKey(key))
+				throw new ArgumentException("\nThe passed in vector was never encoded in the first place!");
+
+			return _translations[key];
+		}
+
+		/// <summary>
+		/// Returns the 'H' matrix of the current 'G' matrix.
+		/// </summary>
+		/// <returns>The 'H' matrix of the current matrix.</returns>
+		public MatrixH GetMatrixH()
+		{
+			var standardMatrix = GenerateStandardMatrix(_cols - _rows);
+			var separatedMatrix = SeparateOtherMatrix();
+			var twistedMatrix = TwistMatrix(separatedMatrix);
+			var combinedMatrix = CombineMatrices(twistedMatrix, standardMatrix);
+			return new MatrixH(combinedMatrix);
+		}
+
+		/// <summary>
+		/// Displays vectors that were used for encoding and the encoding outcome.
+		/// </summary>
+		public void DisplayInnerTable()
+		{
+			foreach (var item in _translations)
+			{
+				var encoded = string.Join("", item.Key);
+				var original = string.Join("", item.Value);
+				Console.WriteLine($"{original} becomes {encoded}.");
+			}
+		}
+
+		/// <summary>
+		/// Prints out the matrix to the console.
+		/// </summary>
+		public void DisplayMatrix()
+		{
+			ConsoleHelper.WriteInformation("The 'G' matrix.");
+			ConsoleHelper.WriteMatrix(_matrix);
+		}
+
+
+		// PRIVATE
+
+		/// <summary>
+		/// Checks to see whether a standard matrix can be found inside.
+		/// </summary>
+		/// <param name="matrix"></param>
+		/// <returns>'true' if can be transformed, 'false' else.</returns>
+		private bool IsTransformableToMatrixH(int[][] matrix)
+		{
+			// Todo: will not work if a given matrix has two columns in a row which can be the start of a standard matrix.
+			var numberOfCols = matrix[0].GetUpperBound(0) + 1;
+			var numberOfRows = matrix.GetUpperBound(0) + 1;
+			// We mark the position in only which a '1' is supposed to be (elsewhere should be '0').
+			var position = 0;
+			var result = false;
+
+			for (var c = 0; c < numberOfCols; c++)
+			{
+				var column = GetColumn(matrix, c);
+				if (ColumnContainsOnlyOne(column, position))
+				{
+					// In the next column the '1' should be a row lower.
+					position++;
+					// When the standard matrix is found.
+					if (position == numberOfRows)
+					{
+						result = true;
+						break;
+					}
+				}
+				else
+				{
+					// The standard array must always begin with a '1' in the first position (zero index).
+					position = 0;
+				}
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Multiplies 2 vectors using mod 2.
+		/// </summary>
+		/// <param name="vector1">The first vector to be multiplied.</param>
+		/// <param name="vector2">The second vector to be multiplied.</param>
+		/// <returns>An int that is the multiplication result in mod 2.</returns>
+		private int MultiplyVectors(int[] vector1, int[] vector2)
+		{
+			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
+				throw new ArgumentException("\nVectors have to be the same length!");
+
+			var length = vector1.GetUpperBound(0) + 1;
+			var result = 0;
+
+			for (var c = 0; c < length; c++)
+				result += vector1[c] * vector2[c];
+			result %= 2;
+
+			return result;
 		}
 
 		/// <summary>
@@ -50,11 +185,11 @@ namespace Logic
 			var length = matrix[0].GetUpperBound(0) + 1;
 			var dimension = matrix.GetUpperBound(0) + 1;
 
-			if (length != _length)
+			if (length != _cols)
 				throw new ArgumentException("\nThe length of vectors in the given matrix " +
 				                            "does not match the length provided to the constructor.");
 
-			if (dimension != _dimension)
+			if (dimension != _rows)
 				throw new ArgumentException("\nThe dimension (number of vectors) in the given matrix " +
 				                            "does not match the dimension provided to the constructor.");
 
@@ -180,164 +315,6 @@ namespace Logic
 			return matrix;
 		}
 
-		// Todo: test.
-		public int[] Encode(int[] vector)
-		{
-			var result = new int[_cols + 1];
-
-			if (_rows != vector.GetUpperBound(0))
-				throw new ArgumentException("\nDimension mismatch!\nNumber of rows and columns differ!");
-
-			for (var c = 0; c <= _cols; c++)
-			{
-				for (var r = 0; r <= _rows; r++)
-				{
-					result[c] += _matrix[c][r] * vector[r];
-				}
-				result[c] %= 2;
-			}
-
-			return result;
-		}
-
-		public int[] Decode(int[] vector)
-		{
-			// Todo: complete this function.
-			// Todo: have a variable for keeping a mapping between words and their encoded variants.
-			return null;
-		}
-
-		/// <summary>
-		/// Checks to see whether a standard matrix can be found inside.
-		/// </summary>
-		/// <param name="matrix"></param>
-		/// <returns>'true' if can be transformed, 'false' else.</returns>
-		public bool IsTransformableToMatrixH(int[][] matrix)
-		{
-			// Todo: will not work if a given matrix has two columns in a row which can be the start of a standard matrix.
-			var numberOfCols = matrix[0].GetUpperBound(0) + 1;
-			var numberOfRows = matrix.GetUpperBound(0) + 1;
-			// We mark the position in only which a '1' is supposed to be (elsewhere should be '0').
-			var position = 0;
-			var result = false;
-
-			for (var c = 0; c < numberOfCols; c++)
-			{
-				var column = GetColumn(matrix, c);
-				if (ColumnContainsOnlyOne(column, position))
-				{
-					// In the next column the '1' should be a row lower.
-					position++;
-					// When the standard matrix is found.
-					if (position == numberOfRows)
-					{
-						// We use these when generating the H matrix.
-						_indexStandardColFirst = c - numberOfRows + 1; // + 1 because 'numberOfRows' is not an index.
-						_indexStandardColLast = c;
-						result = true;
-						break;
-					}
-				}
-				else
-				{
-					// The standard array must always begin with a '1' in the first position (zero index).
-					position = 0;
-				}
-			}
-			return result;
-		}
-
-		// Todo: test.
-		public MatrixH GetMatrixH()
-		{
-			if (!_isTransformableToH)
-				throw new ArgumentException("\nThe current matrix is not transformable to an H matrix.");
-
-			var standardMatrix = CreateStandardMatrix(_cols - _rows);
-			var separatedOtherMatrix = SeparateOtherMatrix();
-			var matrix = CombineMatrices(standardMatrix, separatedOtherMatrix);
-
-			return new MatrixH(matrix);
-		}
-
-		//// Todo: test.
-		//private int[][] CombineMatrices(int[][] standardMatrix, int[][] otherMatrix)
-		//{
-		//	var numberOfColsInStandard = standardMatrix.GetUpperBound(0) + 1;
-		//	var numberOfColsInOther = otherMatrix.GetUpperBound(0) + 1;
-		//	var numberOfCols = numberOfColsInStandard + numberOfColsInOther;
-		//	var matrix = new int[numberOfCols][];
-		//	var col = 0;
-
-		//	for (var c = 0; c < numberOfColsInOther; c++)
-		//	{
-		//		matrix[col] = otherMatrix[c];
-		//		col++;
-		//	}
-
-		//	for (var c = 0; c < numberOfColsInStandard; c++)
-		//	{
-		//		matrix[col] = standardMatrix[c];
-		//		col++;
-		//	}
-
-		//	return matrix;
-		//}
-
-		// Todo: test.
-		private int[][] CreateStandardMatrix(int dimension)
-		{
-			// Create a matrix with default values.
-			var matrix = new int[3][];
-			for (var i = 0; i < dimension; i++)
-				matrix[i] = new int[3];
-
-			for (int r = 0, c = 0; r < dimension; r++)
-			{
-				matrix[r][c] = 1;
-				c++;
-			}
-
-			return matrix;
-		}
-
-		// Todo: test.
-		private int[][] SeparateOtherMatrix()
-		{
-			var numberOfColums = _cols - _rows;
-
-			var matrix = new int[numberOfColums][];
-			var col = 0;
-			for (var c = 0; c <= _cols; c++)
-			{
-				//if (c < _hColFirst || c > _hColLast)
-				//{
-				//	matrix[col] = _matrix[c];
-				//	col++;
-				//}
-			}
-
-			col = 0;
-			var transformedMatrix = new int[_rows + 1][];
-			// We have to take a row and turn it 90 degrees.
-			var rowToBeTurned = new int[numberOfColums];
-			for (var r = 0; r <= _rows; r++)
-			{
-				for (var c = 0; c <= numberOfColums - 1; c++)
-				{
-					// From each 'c' column I take the 'r' row.
-					// In result, 'rowToBeTurned' contains the row of what was a column in 'matrix'.
-					rowToBeTurned[c] = matrix[c][r];
-				}
-				// Since we're working in binary no other transformations need to be applied (no inverting).
-				transformedMatrix[col] = rowToBeTurned;
-				rowToBeTurned = new int[numberOfColums];
-				col++;
-			}
-
-			return transformedMatrix;
-		}
-
 		/// <summary>
 		/// Checks if an array of ints has only one '1' in it and if it's in the specified position.
 		/// </summary>
@@ -370,11 +347,56 @@ namespace Logic
 
 			return column;
 		}
-		
 
-		public void Display()
+		/// <summary>
+		/// Separates the standard matrix from the 'other' matrix in the '_matrix' and returns the 'other' matrix.
+		/// </summary>
+		/// <returns>The 'other' matrix.</returns>
+		private int[][] SeparateOtherMatrix()
 		{
-			ConsoleHelper.WriteMatrix(_matrix);
+			// Todo: it will not work if the standard matrix is not at the beginning of the matrix.
+			var matrix = new int[_rows][];
+
+			// Since the standard matrix is a square we take the number of columns and subtract the square dimension.
+			var numberOfColumns = _cols - _rows;
+			var index = 0; // For the new row.
+
+			for (var r = 0; r < _rows; r++)
+			{
+				var row = new int[numberOfColumns];
+				for (var c = _rows; c < _cols; c++)
+				{
+					row[index] = _matrix[r][c];
+					index++;
+				}
+				matrix[r] = row;
+				index = 0;
+			}
+
+			return matrix;
+		}
+
+		/// <summary>
+		/// Twists the matrix in such a way that the rows become columns and vice versa.
+		/// </summary>
+		/// <param name="matrix">The matrix to be twisted.</param>
+		/// <returns>A twisted matrix.</returns>
+		private int[][] TwistMatrix(int[][] matrix)
+		{
+			var rows = matrix.GetUpperBound(0) + 1;
+			var cols = matrix[0].GetUpperBound(0) + 1;
+			var twisted = new int[cols][];
+
+			for (var c = 0; c < cols; c++)
+			{
+				var twistedCol = new int[rows];
+				for (var r = 0; r < rows; r++)
+				{
+					twistedCol[r] = matrix[r][c];
+				}
+				twisted[c] = twistedCol;
+			}
+			return twisted;
 		}
 	}
 }

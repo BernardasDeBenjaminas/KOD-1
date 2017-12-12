@@ -22,7 +22,7 @@ namespace Logic
 			_rows = _matrix[0].GetUpperBound(0);
 			_cols = _matrix.GetUpperBound(0);
 			_randomGenerator = new Random(DateTime.Now.Millisecond);
-			FillTable();
+			//FillTable();
 		}
 
 		/// <summary>
@@ -234,8 +234,9 @@ namespace Logic
 			return result;
 		}
 
-		public void Display()
+		public void DisplayMatrix()
 		{
+			ConsoleHelper.WriteInformation("The 'H' matrix.");
 			ConsoleHelper.WriteMatrix(_matrix);
 		}
 	}

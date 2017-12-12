@@ -45,13 +45,13 @@ namespace Logic
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.WriteLine();
 
-			var cols = matrix.GetUpperBound(0);
-			var rows = matrix[0].GetUpperBound(0);
-			for (var r = 0; r <= rows; r++)
+			var rows = matrix.GetUpperBound(0) + 1;
+			var cols = matrix[0].GetUpperBound(0) + 1;
+			for (var r = 0; r < rows; r++)
 			{
-				for (var c = 0; c <= cols; c++)
+				for (var c = 0; c < cols; c++)
 				{
-					Console.Write(matrix[c][r] + "  ");
+					Console.Write(matrix[r][c] + "  ");
 				}
 				Console.WriteLine();
 				Console.WriteLine();

@@ -192,6 +192,47 @@ namespace KOD_1
 			var matrixG = new MatrixG(length: matrix[0].GetUpperBound(0) + 1, 
 									  dimension: matrix.GetUpperBound(0) + 1, 
 									  matrix: matrix);
+
+			// ENCODING
+
+			var toEncode1 = new int[2] {0,0};
+			var toEncode2 = new int[2] {0,1};
+			var toEncode3 = new int[2] {1,0};
+			var toEncode4 = new int[2] {1,1};
+
+			var encoded1 = string.Join("", matrixG.Encode(toEncode1));
+			var encoded2 = string.Join("", matrixG.Encode(toEncode2));
+			var encoded3 = string.Join("", matrixG.Encode(toEncode3));
+			var encoded4 = string.Join("", matrixG.Encode(toEncode4));
+
+			var encoded = new List<string> {encoded1, encoded2, encoded3, encoded4};
+			var outcome = new List<string> {"00000", "01011", "10110", "11101"};
+			for (var i = 0; i < encoded.Count; i++)
+				if (encoded[i] != outcome[i])
+					ConsoleHelper.WriteError("'MatrixG' encodes vectors improperly.");
+
+			// DECODING
+
+			var toDecode1 = new int[5] {0,0,0,0,0};
+			var toDecode2 = new int[5] {0,1,0,1,1};
+			var toDecode3 = new int[5] {1,0,1,1,0};
+			var toDecode4 = new int[5] {1,1,1,0,1};
+
+			var decode1 = string.Join("", matrixG.Decode(toDecode1));
+			var decode2 = string.Join("", matrixG.Decode(toDecode2));
+			var decode3 = string.Join("", matrixG.Decode(toDecode3));
+			var decode4 = string.Join("", matrixG.Decode(toDecode4));
+
+			var decoded = new List<string> {decode1, decode2, decode3, decode4};
+			outcome = new List<string> {"00", "01", "10", "11"};
+			for (var i = 0; i < decoded.Count; i++)
+				if (decoded[i] != outcome[i])
+					ConsoleHelper.WriteError("'MatrixG' decodes vectors improperly.");
+
+			
+			var matrixH = matrixG.GetMatrixH();
+			matrixG.DisplayMatrix();
+			matrixH.DisplayMatrix();
 		}
 	}
 }
