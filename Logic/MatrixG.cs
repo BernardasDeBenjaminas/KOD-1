@@ -14,6 +14,9 @@ namespace Logic
 		private readonly int _rows;	// Number of rows in '_matrix'.
 		private readonly int _cols; // Number of columns in '_matrix'.
 
+
+		// CONSTRUCTOR
+
 		/// <summary>
 		/// Returns a new object of type 'MatrixG'.
 		/// </summary>
@@ -56,8 +59,12 @@ namespace Logic
 				var matrixCol = GetColumn(_matrix, c);
 				result[c] = MultiplyVectors(matrixCol, vector);
 			}
+
 			// Add the encoded vector to the table.
-			_translations.Add(string.Join("", result), vector);
+			var key = string.Join("", result);
+			if (!_translations.ContainsKey(key))
+				_translations.Add(key, vector);
+
 			return result;
 		}
 
@@ -179,7 +186,7 @@ namespace Logic
 		/// Check if a given matrix is useable.
 		/// </summary>
 		/// <param name="matrix">A matrix to be checked.</param>
-		/// <returns>'true' is the matrix is proper, 'false' if not.</returns>
+		/// <returns>'true' if the matrix is proper, 'false' if not.</returns>
 		private bool CheckIfProperMatrixGiven(int[][] matrix)
 		{
 			var length = matrix[0].GetUpperBound(0) + 1;

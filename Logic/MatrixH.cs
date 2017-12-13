@@ -6,238 +6,257 @@ namespace Logic
 {
 	public class MatrixH
 	{
-		private static int[][] _matrix;
+		// This is where I'll store coset leaders and their associated weights.
+		//		Key - syndrome of coset leaders;
+		//		Value - weight of coset leader.
+		private readonly Dictionary<string, int> _translations = new Dictionary<string, int>();
+		private readonly int[][] _matrix; // The main matrix.
 		private readonly int _rows; // Number of rows in '_matrix'.
 		private readonly int _cols; // Number of columns in '_matrix'.
-		private readonly Random _randomGenerator;
+		private readonly Random _randomGenerator = new Random();
 
-		// The main table:
-		//	string	- leader's syndrome;
-		//	int		- leader's weight.
-		public Dictionary<string, int> _table;
 
+		// CONSTRUCTOR
+
+		/// <summary>
+		/// Returns a new object of type 'MatrixH'
+		/// </summary>
+		/// <param name="matrix">A matrix to be used as the base.</param>
 		public MatrixH(int[][] matrix)
 		{
-			_matrix = matrix;
-			_rows = _matrix[0].GetUpperBound(0);
-			_cols = _matrix.GetUpperBound(0);
-			_randomGenerator = new Random(DateTime.Now.Millisecond);
-			//FillTable();
+			if (CheckIfProperMatrixGiven(matrix))
+			{
+				_matrix = matrix;
+				_rows = matrix.GetUpperBound(0) + 1;
+				_cols = matrix[0].GetUpperBound(0) + 1;
+
+				FillInnerTable();
+			}
+		}
+
+
+		// PUBLIC
+
+		/// <summary>
+		/// Calculates the syndrome of a given vector.
+		/// </summary>
+		/// <param name="vector">Vector of which syndrome is to be calculted.</param>
+		/// <returns>A syndrome.</returns>
+		public int[] GetSyndrome(int[] vector)
+		{
+			if (vector.GetUpperBound(0) + 1 != _cols)
+				throw new ArgumentException("\nThe length of the vector must match the number of columns in the matrix!");
+
+			var syndrome = new int[_rows];
+			for (var r = 0; r < _rows; r++)
+			{
+				var row1 = _matrix[r];
+				syndrome[r] = MultiplyVectors(row1, vector);
+			}
+			return syndrome;
 		}
 
 		/// <summary>
-		/// Tries to decode a vector.
+		/// Uses the 'Step-by-Step' algorithm to decode a vector.
 		/// </summary>
-		/// <param name="vector">Vector to decode.</param>
-		/// <returns>A the supposedly decoded vector in a new int[].</returns>
+		/// <param name="vector">The vector to be decoded.</param>
+		/// <returns>The decoded vector.</returns>
 		public int[] Decode(int[] vector)
 		{
-			// Get the length of the vector.
-			var length = vector.GetUpperBound(0) + 1;
-			// Create the tuple for decoding (it's a vector with only zeroes except in one position).
-			var answer = new int[length];
+			// Todo: make a shallow copy of the vector and use that.
+			var result = new int[_cols];
 
-			for (var i = 0; i < length; i++)
+			for (var c = 0; c < _cols; c++)
 			{
-				// Initialize it.
-				var tuple = new int[length];
-				// Assign the only '1' it will have for the cycle.
-				tuple[i] = 1;
-				// Calculate the syndrome of the vector.
-				var syndrome = string.Join("", CalculateSyndrome(vector));
-				// Get the weight of the associated syndrome.
-				var weightOfOne = _table[syndrome];
+				// Step 1.
+				var tuple = new int[_cols];
+				tuple[c] = 1;
 
-				// It means the vector was not corrupted during transmission and should be taken as is.
-				if (weightOfOne == 0)
+				// Step 2.
+				var syndrome = GetSyndrome(vector);
+				var key = string.Join("", syndrome);
+				var weight = _translations[key];
+
+				// Step 3.
+				if (weight == 0)
 				{
-					answer = vector;
+					result = vector;
 					break;
 				}
 
-				// Add the vectors together.
-				var addedVectors = AddVectors(tuple, vector);
-				// Calculate the syndrome.
-				syndrome = string.Join("", CalculateSyndrome(addedVectors));
-				// Get the weight of the associated syndrome.
-				var weightOfTwo = _table[syndrome];
-				// If the weight is lower then we set the 'addedVectors' as our new 'Vector'
-				if (weightOfTwo < weightOfOne)
+				// Step 4.
+				var changedRow = AddVectors(tuple, vector);
+				var newSyndrome = GetSyndrome(changedRow);
+				var newKey = string.Join("", newSyndrome);
+				var newWeight = _translations[newKey];
+				if (newWeight < weight)
 				{
-					vector = addedVectors;
+					vector = changedRow;
 				}
 			}
 
-			return answer;
-		}
-
-		public int[] CalculateSyndrome(int[] vector)
-		{
-			var result = new int[_rows + 1];
-
-			// No. of columns in vector must be equal to the no. of columns in matrix. 
-			if (_cols != vector.GetUpperBound(0))
-				throw new ArgumentException("\nDimension mismatch!\nNumber of columns differ!");
-
-			for (var r = 0; r <= _rows; r++)
-			{
-				for (var c = 0; c <= _cols; c++)
-				{
-					result[r] += _matrix[c][r] * vector[c];
-				}
-				result[r] %= 2;
-			}
-			
-			return result;
+			return vector;
 		}
 
 		/// <summary>
-		/// Generates coset leaders, calculates their syndromes and weights and fills the internal '_table' with acquired information.
+		/// Prints out the matrix to the console.
 		/// </summary>
-		private void FillTable()
-		{
-			var numberOfSyndromes = (int) Math.Pow(2, _rows + 1);
-
-			// Generate coset leaders of weight 1.
-			GenerateCosetLeadersOne(numberOfSyndromes, out var array, out var syndromes);
-
-			// Generate the rest of coset leaders (weight > 1).
-			// Todo: what about weight 3?
-			// An extra + 1 because we have to count in the zero vector.
-			var index = _cols + 1 + 1; 
-			for (; index < numberOfSyndromes; index++)
-			{
-				// Generate a leader of weight 2.
-				var generatedLeader = GenerateCosetLeader(_cols + 1, 2);
-				// Calculate its syndrome.
-				var syndrome = string.Join("", CalculateSyndrome(generatedLeader));
-				// If we don't already have it - we store the syndrome.
-				if (!syndromes.Contains(syndrome))
-				{
-					syndromes.Add(syndrome);
-					// Add the syndrome's leader.
-					array[index] = generatedLeader;
-					// Stop the cycle if we have enough syndromes.
-					if (syndromes.Count == numberOfSyndromes)
-						break;
-				}
-				else
-				{
-					index--;
-				}
-			}
-
-			// Fill the <syndrome, weight> table.
-			FillTheTable(array, syndromes);
-		}
-
-		/// <summary>
-		/// Fills the internal '_table' with syndromes and weights.
-		/// </summary>
-		/// <param name="leaders">An uninitialized 2D array for storing leaders.</param>
-		/// <param name="syndromes">An uninitialized list of strings for storing syndromes.</param>
-		private void FillTheTable(int[][] leaders, List<string> syndromes)
-		{
-			_table = new Dictionary<string, int>();
-
-			for (var i = 0; i < syndromes.Count; i++)
-				_table.Add(syndromes[i], CalculateWeight(leaders[i]));
-		}
-
-		/// <summary>
-		/// Generates a row of numbers of specified length and weight.
-		/// Example: if length is 4 and weight is 1, the function may return 0010.
-		/// Example: if length is 5 and weight is 2, the function may return 10010.
-		/// </summary>
-		/// <param name="length">Length of the leader.</param>
-		/// <param name="weight">How many '1' does the leader have to have.</param>
-		/// <returns></returns>
-		private int[] GenerateCosetLeader(int length, int weight)
-		{
-			var array = new int[length];
-			var positionsUsed = new List<int>(); // Used to keep track in which positions we already inserted '1'.
-			var onesUsed = 0; // Used to count how many '1' we insert.
-
-			for (var i = 0; i < length; i++)
-			{
-				// Generate a random position.
-				var position = _randomGenerator.Next(0, length);
-				if (positionsUsed.Contains(position))
-					continue;
-
-				// Insert the '1' at a randomly generated position.
-				array[position] = 1;
-				// Mark the position as used.
-				positionsUsed.Add(position); 
-				// Increment the number of '1' used.
-				onesUsed++;
-
-				// If we inserted enough '1'.
-				if (onesUsed == weight)
-					break;
-
-				// If the cycle has ended but we did not insert enough '1'.
-				if (i == length - 2 && onesUsed != weight)
-					i = 0;
-			}
-
-			return array;
-		}
-
-		/// <summary>
-		/// Generates coset leaders of up to weight 1. Stores them in the 'array' variable and their syndromes in 'syndromes'.
-		/// </summary>
-		/// <param name="numberOfSyndromes">The total number of syndromes including other weights.</param>
-		/// <param name="array">Coset leaders will be placed here.</param>
-		/// <param name="syndromes">Coset leader syndromes will be placed here.</param>
-		private void GenerateCosetLeadersOne(int numberOfSyndromes, out int[][] array, out List<string> syndromes)
-		{
-			syndromes = new List<string>();
-			array = new int[numberOfSyndromes][];
-
-			// The first element must always be a zero vector!
-			array[0] = new int[_cols + 1]; 
-			// Add the zero vector's syndrome to the list.
-			syndromes.Add(string.Join("", CalculateSyndrome(array[0])));
-			// Because the first position was used for the zero vector.
-			var index = 1; 
-
-			for (; index <= _cols + 1; index++)
-			{
-				var leader = new int[_cols + 1];
-				// Insert the '1' in an array made up of only zeroes.
-				leader[index - 1] = 1; 
-				// Calculate the syndrome and add it.
-				var syndrome = string.Join("", CalculateSyndrome(leader));
-				syndromes.Add(syndrome); 
-				// Store the leader.
-				array[index] = leader; 
-			}
-		}
-
-		public int CalculateWeight(int[] vector)
-		{
-			return vector.Count(number => number != 0);
-		}
-
-		private int[] AddVectors(int[] vector1, int[] vector2)
-		{
-			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
-				throw new Exception("\nThe vectors are of different lengths!");
-
-			var length = vector1.GetUpperBound(0) + 1;
-			var result = new int[length];
-
-			for (var i = 0; i < length; i++)
-				result[i] = (vector1[i] * vector2[i]) % 2;
-
-			return result;
-		}
-
 		public void DisplayMatrix()
 		{
 			ConsoleHelper.WriteInformation("The 'H' matrix.");
 			ConsoleHelper.WriteMatrix(_matrix);
+		}
+
+
+		// PRIVATE
+
+		/// <summary>
+		/// Fills the '_translations' table with coset leaders' syndromes and leaders weights;
+		/// </summary>
+		private void FillInnerTable()
+		{
+			// Todo: make it work with any weight.
+			var numberOfLeaders = (int) Math.Pow(2, _rows);
+
+			// Generate extra easy leader (weight = 0).
+			var easyLeader = new int[_cols];
+			var easySyndrome = GetSyndrome(easyLeader);
+			_translations.Add(key: string.Join("", easySyndrome), value: GetWeight(easyLeader));
+
+			// Generate easy leaders (weight = 1).
+
+			// How many leaders will we need? count = Math.Pow(2, _rows) + 1
+			// How many leaders can we generate of weight 0? count = 1
+			// How many leaders can we generate of weight 1? count = _cols 
+			// How many leaders can we generate of weight 2? count = Math.Pow(2, _cols - 1) - 1
+
+			for (var c = _cols - 1; c >= 0; c--)
+			{
+				var leader = new int[_cols];
+				leader[c] = 1;
+				var syndrome = GetSyndrome(leader);
+				_translations.Add(key: string.Join("", syndrome), value: GetWeight(leader));
+			}
+
+			// Generate hard leaders (weight > 1).
+			while (numberOfLeaders > _translations.Count)
+			{
+				var leader = GenerateLeader(_cols, 2);
+				var syndrome = GetSyndrome(leader);
+
+				// If a randomly generated leader has a new syndrome - we save it.
+				var key = string.Join("", syndrome);
+				if (!_translations.ContainsKey(key))
+					_translations.Add(key, GetWeight(leader));
+			}
+		}
+
+		/// <summary>
+		/// Generates a random vector of required length and weight.
+		/// </summary>
+		/// <param name="length">Length of the vector.</param>
+		/// <param name="weight">Weight of the vector.</param>
+		/// <returns>A new leader.</returns>
+		private int[] GenerateLeader(int length, int weight)
+		{
+			var usedIndexes = new List<int>();
+			var leader = new int[length];
+
+			while (true)
+			{
+				// Generate a random index.
+				var index = _randomGenerator.Next(0, length);
+				// If the index was never used before..
+				if (!usedIndexes.Contains(index))
+				{
+					// ..we use it.
+					leader[index] = 1;
+					// Mark the index as used.
+					usedIndexes.Add(index);
+					// Break if the leader has enough '1' in it.
+					if (usedIndexes.Count == weight)
+						break;
+				}
+			}
+
+			return leader;
+		}
+
+		/// <summary>
+		/// Returns the number of '1' found in the given vector.
+		/// </summary>
+		/// <param name="vector">A vector to be searched through.</param>
+		/// <returns>Weight of a vector.</returns>
+		private int GetWeight(int[] vector)
+		{
+			return vector.Count(n => n == 1);
+		}
+
+		/// <summary>
+		/// Add 2 vectors together using mod 2.
+		/// </summary>
+		/// <param name="vector1">The first vector to be added.</param>
+		/// <param name="vector2">The second vector to be added.</param>
+		/// <returns>A vector that is the sum of 'vector1' and 'vector2' in mod 2.</returns>
+		private int[] AddVectors(int[] vector1, int[] vector2)
+		{
+			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
+				throw new ArgumentException("\nVectors have to be the same length.");
+
+			var length = vector1.GetUpperBound(0) + 1;
+			var result = new int[length];
+
+			for (var c = 0; c < length; c++)
+				result[c] = (vector1[c] + vector2[c]) % 2;
+
+			return result;
+		}
+
+		/// <summary>
+		/// Multiplies 2 vectors together using mod 2.
+		/// </summary>
+		/// <param name="vector1">The first vector to be multiplied.</param>
+		/// <param name="vector2">The second vector to be multiplied.</param>
+		/// <returns>An int that is the multiplication result in mod 2.</returns>
+		private int MultiplyVectors(int[] vector1, int[] vector2)
+		{
+			// Todo: currently, the implementation matches the one found in 'MatrixG'.
+			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
+				throw new ArgumentException("\nVectors have to be the same length!");
+
+			var length = vector1.GetUpperBound(0) + 1;
+			var result = 0;
+
+			for (var c = 0; c < length; c++)
+				result += vector1[c] * vector2[c];
+			result %= 2;
+
+			return result;
+		}
+
+		/// <summary>
+		/// Check if a given matrix is useable.
+		/// </summary>
+		/// <param name="matrix">A matrix to be checked.</param>
+		/// <returns>'true' if the matrix is proper, 'false' if not.</returns>
+		private bool CheckIfProperMatrixGiven(int[][] matrix)
+		{
+			if (matrix == null)
+				throw new ArgumentNullException(nameof(matrix), "\nThe passed in matrix cannot be null!");
+
+			for (var r = 0; r < matrix.GetUpperBound(0) + 1; r++)
+			{
+				try
+				{
+					var test = matrix[r];
+				}
+				catch (Exception)
+				{
+					throw new ArgumentException("\nThe passed in matrix has null rows!");
+				}
+			}
+
+			return true;
 		}
 	}
 }
