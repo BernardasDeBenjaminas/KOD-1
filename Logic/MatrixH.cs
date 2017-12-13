@@ -63,9 +63,9 @@ namespace Logic
 		/// <returns>The decoded vector.</returns>
 		public int[] Decode(int[] vector)
 		{
-			// Todo: make a shallow copy of the vector and use that.
-			var result = new int[_cols];
+			var result = Clone(vector); // Clone the original vector.
 
+			// Todo: kodėl būtent tiek kartų?
 			for (var c = 0; c < _cols; c++)
 			{
 				// Step 1.
@@ -73,29 +73,28 @@ namespace Logic
 				tuple[c] = 1;
 
 				// Step 2.
-				var syndrome = GetSyndrome(vector);
+				var syndrome = GetSyndrome(result);
 				var key = string.Join("", syndrome);
 				var weight = _translations[key];
 
 				// Step 3.
 				if (weight == 0)
 				{
-					result = vector;
 					break;
 				}
 
 				// Step 4.
-				var changedRow = AddVectors(tuple, vector);
+				var changedRow = AddVectors(tuple, result);
 				var newSyndrome = GetSyndrome(changedRow);
 				var newKey = string.Join("", newSyndrome);
 				var newWeight = _translations[newKey];
 				if (newWeight < weight)
 				{
-					vector = changedRow;
+					result = changedRow;
 				}
 			}
 
-			return vector;
+			return result;
 		}
 
 		/// <summary>
@@ -232,6 +231,22 @@ namespace Logic
 			result %= 2;
 
 			return result;
+		}
+
+		/// <summary>
+		/// Returns a shallow copy of a passed in vector.
+		/// </summary>
+		/// <param name="vector">Vector whose values need to be copied without modifying the original.</param>
+		/// <returns>A vector with identical values.</returns>
+		private int[] Clone(int[] vector)
+		{
+			var length = vector.GetUpperBound(0) + 1;
+			var newVector = new int[length];
+
+			for (var c = 0; c < length; c++)
+				newVector[c] = vector[c];
+
+			return newVector;
 		}
 
 		/// <summary>

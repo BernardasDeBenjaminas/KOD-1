@@ -38,6 +38,8 @@ namespace Logic
 			{
 				_matrix = CheckIfProperMatrixGiven(matrix) ? matrix : GenerateMatrix(length, dimension);
 			}
+
+			FillInnerTable();
 		}
 
 
@@ -123,6 +125,25 @@ namespace Logic
 
 
 		// PRIVATE
+
+		/// <summary>
+		/// Fills the '_translations' variable with all of the possible words that can be encoded so that we could decode any given vector.
+		/// </summary>
+		private void FillInnerTable()
+		{
+			while (_translations.Count < Math.Pow(2, _rows))
+			{
+				// Generate a random vector.
+				var word = GenerateVector(_rows);
+				// Encode it.
+				var translation = Encode(word);
+				// Convert the encoded vector to a string.
+				var key = string.Join("", translation);
+				// If a key doesn't exist - we add it.
+				if (!_translations.ContainsKey(key))
+					_translations.Add(key, word);
+			}
+		}
 
 		/// <summary>
 		/// Checks to see whether a standard matrix can be found inside.
@@ -404,6 +425,22 @@ namespace Logic
 				twisted[c] = twistedCol;
 			}
 			return twisted;
+		}
+
+		/// <summary>
+		/// Generates a vector of random weight but specified length.
+		/// </summary>
+		/// <param name="length">Length of the vector to be generated.</param>
+		/// <returns>A new vector.</returns>
+		private int[] GenerateVector(int length)
+		{
+			var vector = new int[length];
+			var generator = new Random(DateTime.Now.Millisecond);
+
+			for (var c = 0; c < length; c++)
+				vector[c] = generator.Next(0, 2);
+
+			return vector;
 		}
 	}
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Logic;
 
 namespace KOD_1
@@ -9,9 +8,29 @@ namespace KOD_1
 	{
 		public static void Main(string[] args)
 		{
-			TestMatrixG();
-			TestMatrixH();
-			TestDecodingOfCorruptedVectors();
+			//TestMatrixG();
+			//TestMatrixH();
+			//TestDecodingOfCorruptedVectors();
+
+			// G = 1 0 1 1 0
+			//     0 1 0 1 1
+			var matrix = new int[2][];
+			matrix[0] = new int[5] { 1, 0, 1, 1, 0 };
+			matrix[1] = new int[5] { 0, 1, 0, 1, 1 };
+
+			var enigma = new Enigma(
+				length: matrix[0].GetUpperBound(0) +  1, 
+				dimension: matrix.GetUpperBound(0) + 1,
+				matrixG: matrix);
+
+			var channel = new Channel(0.5);
+
+
+			var messageToEncode = new int[2] {0,0};
+			var encoded = enigma.Encode(messageToEncode);
+			var corrupted = channel.SendVectorThrough(encoded);
+			var positions = enigma.FindChangedPositions(encoded, corrupted);
+			var result = enigma.Decode(corrupted);
 
 			Console.ReadKey();
 		}
@@ -199,7 +218,8 @@ namespace KOD_1
 			var encoded = matrixG.Encode(clean);   // Encodes to 011010
 			var corrupted = matrixG.Encode(dirty); // Encodes to 011010
 			// 3. Corrupt it
-			corrupted[5] = 1;
+			var channel = new Channel(0.500121);
+			corrupted = channel.SendVectorThrough(corrupted);
 			// 4. Decode it
 			var decoded = matrixH.Decode(corrupted);
 
