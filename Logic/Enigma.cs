@@ -10,6 +10,7 @@ namespace Logic
 		private readonly MatrixG _matrixG; // G
 		private readonly MatrixH _matrixH;
 
+
 		// CONSTRUCTOR
 		
 		/// <summary>
@@ -31,11 +32,21 @@ namespace Logic
 		
 		// PUBLIC
 
+		/// <summary>
+		/// Encode a given vector using the 'standard array' encoding technique.
+		/// </summary>
+		/// <param name="vector">Vector to be encoded.</param>
+		/// <returns>An encoded vector.</returns>
 		public int[] Encode(int[] vector)
 		{
 			return _matrixG.Encode(vector);
 		}
 
+		/// <summary>
+		/// Decode a given vector using the 'Step-by-Step' decoding technique.
+		/// </summary>
+		/// <param name="vector">Vector to be decoded.</param>
+		/// <returns>A decoded vector.</returns>
 		public int[] Decode(int[] vector)
 		{
 			var one = _matrixH.Decode(vector);

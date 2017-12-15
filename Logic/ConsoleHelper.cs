@@ -58,5 +58,18 @@ namespace Logic
 			}
 			Console.ForegroundColor = ConsoleColor.Gray;
 		}
+
+		public static void WriteMatrix(MatrixG matrix)
+		{
+			var innerMatrix = matrix.Matrix;
+
+			var message = "G = ";
+
+			for (var c = 0; c <= innerMatrix.GetUpperBound(0); c++)
+				if (innerMatrix[c] != null)
+					message += string.Join(" ", innerMatrix[c]) + "\n    ";
+
+			WriteInformation(message);
+		}
 	}
 }

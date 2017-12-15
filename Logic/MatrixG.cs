@@ -10,9 +10,9 @@ namespace Logic
 		//		Key - encoded;
 		//		Value - original.
 		private readonly Dictionary<string, int[]> _translations = new Dictionary<string, int[]>(); 
-		private readonly int[][] _matrix; // The main matrix.
-		private readonly int _rows;	// Number of rows in '_matrix'.
-		private readonly int _cols; // Number of columns in '_matrix'.
+		public readonly int[][] Matrix; // The main matrix.
+		private readonly int _rows;	// Number of rows in 'Matrix'.
+		private readonly int _cols; // Number of columns in 'Matrix'.
 
 
 		// CONSTRUCTOR
@@ -31,12 +31,19 @@ namespace Logic
 			if (dimension <= 0)
 				throw new ArgumentException("\nThe dimension cannot be zero or less.");
 
+			if (length < dimension)
+				throw new ArgumentException("\nThe number of columns cannot be smaller than the number of rows.");
+
 			_rows = dimension;
 			_cols = length;
 
-			if (matrix != null)
+			if (matrix != null && CheckIfProperMatrixGiven(matrix))
 			{
-				_matrix = CheckIfProperMatrixGiven(matrix) ? matrix : GenerateMatrix(length, dimension);
+				Matrix = matrix;
+			}
+			else
+			{
+				Matrix = GenerateMatrix(length, dimension);
 			}
 
 			FillInnerTable();
@@ -58,7 +65,7 @@ namespace Logic
 			var result = new int[_cols];
 			for (var c = 0; c < _cols; c++)
 			{
-				var matrixCol = GetColumn(_matrix, c);
+				var matrixCol = GetColumn(Matrix, c);
 				result[c] = MultiplyVectors(matrixCol, vector);
 			}
 
@@ -120,7 +127,7 @@ namespace Logic
 		public void DisplayMatrix()
 		{
 			ConsoleHelper.WriteInformation("The 'G' matrix.");
-			ConsoleHelper.WriteMatrix(_matrix);
+			ConsoleHelper.WriteMatrix(Matrix);
 		}
 
 
@@ -131,6 +138,8 @@ namespace Logic
 		/// </summary>
 		private void FillInnerTable()
 		{
+			// Todo: rewrite it to be more effective.
+			// Todo: fix memory leak.
 			while (_translations.Count < Math.Pow(2, _rows))
 			{
 				// Generate a random vector.
@@ -234,8 +243,8 @@ namespace Logic
 			}
 
 			if (!IsTransformableToMatrixH(matrix))
-				throw new ArgumentException("\nThe provided matrix is not a standard G matrix " +
-				                            "(can not be transformed to an H matrix).");
+				throw new ArgumentException("\nPateikta matrica neturi savyje standartinės formos matricos " +
+				                            "(nebus galima gauti kontrolinės (H) matricos).");
 
 			return true;
 		}
@@ -248,6 +257,10 @@ namespace Logic
 		/// <returns></returns>
 		private int[][] GenerateMatrix(int length, int dimension)
 		{
+			if (length == dimension)
+			{
+				return GenerateStandardMatrix(length);
+			}
 			// Todo: will it work with a 1x1?
 			// Generate the standard matrix.
 			int[][] standardMatrix = GenerateStandardMatrix(dimension);
@@ -377,7 +390,7 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Separates the standard matrix from the 'other' matrix in the '_matrix' and returns the 'other' matrix.
+		/// Separates the standard matrix from the 'other' matrix in the 'Matrix' and returns the 'other' matrix.
 		/// </summary>
 		/// <returns>The 'other' matrix.</returns>
 		private int[][] SeparateOtherMatrix()
@@ -394,7 +407,7 @@ namespace Logic
 				var row = new int[numberOfColumns];
 				for (var c = _rows; c < _cols; c++)
 				{
-					row[index] = _matrix[r][c];
+					row[index] = Matrix[r][c];
 					index++;
 				}
 				matrix[r] = row;

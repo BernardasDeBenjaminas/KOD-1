@@ -11,8 +11,8 @@ namespace Logic
 		//		Value - weight of coset leader.
 		private readonly Dictionary<string, int> _translations = new Dictionary<string, int>();
 		private readonly int[][] _matrix; // The main matrix.
-		private readonly int _rows; // Number of rows in '_matrix'.
-		private readonly int _cols; // Number of columns in '_matrix'.
+		private readonly int _rows; // Number of rows in 'Matrix'.
+		private readonly int _cols; // Number of columns in 'Matrix'.
 		private readonly Random _randomGenerator = new Random();
 
 
