@@ -6,45 +6,41 @@ namespace Logic
 {
 	public class MatrixG
 	{
-		// This is where I'll store words and their encoded meanings.
-		//		Key - encoded;
-		//		Value - original.
+		// '_translations' kintamajame laikysiu galimus užkoduoti žodžius ir jų užkoduotas reikšmes:
+		//		Raktas  - užkoduotas žodis;
+		//		Reikšmė - originalus žodis.
 		private readonly Dictionary<string, int[]> _translations = new Dictionary<string, int[]>(); 
-		public readonly int[][] Matrix; // The main matrix.
-		private readonly int _rows;	// Number of rows in 'Matrix'.
-		private readonly int _cols; // Number of columns in 'Matrix'.
+		public readonly int[][] Matrix; // Pagrindinė matrica.
+		private readonly int _rows;	    // 'Matrix' dimensija (k).
+		private readonly int _cols;     // 'Matrix' ilgis (n).
 
 
 		// CONSTRUCTOR
-
+		// Todo: test with 1.
 		/// <summary>
-		/// Returns a new object of type 'MatrixG'.
+		/// Grąžina generuojančią matricą (viduje jau yra standartinė matrica).
 		/// </summary>
-		/// <param name="length">Length of the vectors.</param>
-		/// <param name="dimension">Number of vectors.</param>
-		/// <param name="matrix">(Optional) a created matrix to be used. If none is provided - a new one will be generated.</param>
+		/// <param name="length">Matricos ilgis.</param>
+		/// <param name="dimension">Matricos dimensija.</param>
+		/// <param name="matrix">Vartotojo norima matrica naudojimui (jeigu nebus pateikta - kodas pats sugeneruos ją).</param>
 		public MatrixG(int length, int dimension, int[][] matrix = null)
 		{
-			if (length <= 0)
-				throw new ArgumentException("\nThe length cannot be zero or less.");
+			if (length < 1)
+				throw new ArgumentException("\nMatricos ilgis privalo būti 1 arba daugiau!");
 
-			if (dimension <= 0)
-				throw new ArgumentException("\nThe dimension cannot be zero or less.");
+			if (dimension < 1)
+				throw new ArgumentException("\nMatricos dimensija privalo būti 1 arba daugiau!");
 
 			if (length < dimension)
-				throw new ArgumentException("\nThe number of columns cannot be smaller than the number of rows.");
+				throw new ArgumentException("\nMatricos ilgis negali būti mažesnis už jos dimensiją!");
 
 			_rows = dimension;
 			_cols = length;
 
 			if (matrix != null && CheckIfProperMatrixGiven(matrix))
-			{
 				Matrix = matrix;
-			}
 			else
-			{
 				Matrix = GenerateMatrix(length, dimension);
-			}
 
 			FillInnerTable();
 		}
@@ -53,52 +49,44 @@ namespace Logic
 		// PUBLIC 
 
 		/// <summary>
-		/// Encodes a vector and adds it to it's inner table.
+		/// Užkoduoja vektorių pasinaudodamas generuojančia matrica.
 		/// </summary>
-		/// <param name="vector">The vector to be encoded.</param>
-		/// <returns>An encoded vector.</returns>
+		/// <param name="vector">Vektorius, kurį reikia užkoduoti.</param>
+		/// <returns>Generuojančia matrica užkoduotas vektorius.</returns>
 		public int[] Encode(int[] vector)
 		{
 			if (vector.GetUpperBound(0) + 1 != _rows)
-				throw new ArgumentException("\nThe number of columns in the vector must match the number of rows in the matrix!");
+				throw new ArgumentException("\nVektoriaus ilgis privalo sutapti su matricos dimensija!");
 
 			var result = new int[_cols];
 			for (var c = 0; c < _cols; c++)
 			{
-				var matrixCol = GetColumn(Matrix, c);
+				var matrixCol = GetColumnAsVector(Matrix, c);
 				result[c] = MultiplyVectors(matrixCol, vector);
 			}
-
-			// Add the encoded vector to the table.
-			var key = string.Join("", result);
-			if (!_translations.ContainsKey(key))
-				_translations.Add(key, vector);
 
 			return result;
 		}
 
 		/// <summary>
-		/// Looks in to its inner table to see if the passed in vector has been encoded before and if it has - it returns it.
+		/// Dekoduoja vektorių.
 		/// </summary>
-		/// <param name="vector">The vector to be decoded.</param>
-		/// <returns>The decoded vector if one is found, else raises an exception.</returns>
+		/// <param name="vector">Vektorius, kurį reikia dekoduoti.</param>
+		/// <returns>Generuojančia matrica dekoduotas vektorius.</returns>
 		public int[] Decode(int[] vector)
 		{
 			if (vector.GetUpperBound(0) + 1 != _cols)
-				throw new ArgumentException("\nThe passed in vector is too long to have been coded with this instance of the matrix!");
+				throw new ArgumentException("\nPateikto vektoriaus ilgis privalo sutapti su matricos ilgiu!");
 
+			// Iš '_translations' kintamojo tiesiog ištraukiame žodį, kurio kuoduotą versiją turime.
 			var key = string.Join("", vector);
-
-			//if (!_translations.ContainsKey(key))
-			//	throw new ArgumentException("\nThe passed in vector was never encoded in the first place!");
-
 			return _translations[key];
 		}
 
 		/// <summary>
-		/// Returns the 'H' matrix of the current 'G' matrix.
+		/// Grąžina iš generuojančios matricos gautą kontrolinę (H) matricą.
 		/// </summary>
-		/// <returns>The 'H' matrix of the current matrix.</returns>
+		/// <returns>Grąžina kontrolinę matricą.</returns>
 		public MatrixH GetMatrixH()
 		{
 			var standardMatrix = GenerateStandardMatrix(_cols - _rows);
@@ -108,74 +96,63 @@ namespace Logic
 			return new MatrixH(combinedMatrix);
 		}
 
-		/// <summary>
-		/// Displays vectors that were used for encoding and the encoding outcome.
-		/// </summary>
-		public void DisplayInnerTable()
-		{
-			foreach (var item in _translations)
-			{
-				var encoded = string.Join("", item.Key);
-				var original = string.Join("", item.Value);
-				Console.WriteLine($"{original} becomes {encoded}.");
-			}
-		}
-
-		/// <summary>
-		/// Prints out the matrix to the console.
-		/// </summary>
-		public void DisplayMatrix()
-		{
-			ConsoleHelper.WriteInformation("The 'G' matrix.");
-			ConsoleHelper.WriteMatrix(Matrix);
-		}
-
 
 		// PRIVATE
 
 		/// <summary>
-		/// Fills the '_translations' variable with all of the possible words that can be encoded so that we could decode any given vector.
+		/// Užpildo '_translations' kintamąjį su visais žodžiais, kuriuos gali užkoduoti ir jų atitinkamomis užkoduotomis reikšmėmis.
 		/// </summary>
 		private void FillInnerTable()
 		{
-			// Todo: rewrite it to be more effective.
-			// Todo: fix memory leak.
-			while (_translations.Count < Math.Pow(2, _rows))
+			var index = 0;
+			while (true)
 			{
-				// Generate a random vector.
-				var word = GenerateVector(_rows);
-				// Encode it.
-				var translation = Encode(word);
-				// Convert the encoded vector to a string.
-				var key = string.Join("", translation);
-				// If a key doesn't exist - we add it.
-				if (!_translations.ContainsKey(key))
-					_translations.Add(key, word);
+				// Paduotą dešimtainį skaičių paverčia į dvejetainį, vėliau į 'string' ir užpildo '0' iki mums norimo ilgio.
+				var valueAsString = Convert.ToString(value: index, toBase: 2).PadLeft(totalWidth: _rows, paddingChar: '0');
+				if (valueAsString.Length > _rows)
+					break;
+
+				index++;
+				var valueAsArray = StringToIntArrayVector(valueAsString);
+				var keyAsArray = Encode(valueAsArray);
+				var keyAsString = string.Join("", keyAsArray);
+				_translations.Add(keyAsString, valueAsArray);
 			}
 		}
 
+		// Todo: pavogta iš 'Presenter'.
+		private int[] StringToIntArrayVector(string vector)
+		{
+			var length = vector.Length;
+			var row = new int[length];
+			for (var c = 0; c < length; c++)
+			{
+				row[c] = (int)char.GetNumericValue(vector[c]);
+			}
+			return row;
+		}
+
 		/// <summary>
-		/// Checks to see whether a standard matrix can be found inside.
+		/// Patikrina ar pateiktą matricą galima paversti į kontrolinę matricą.
 		/// </summary>
-		/// <param name="matrix"></param>
-		/// <returns>'true' if can be transformed, 'false' else.</returns>
+		/// <param name="matrix">Matrica, kurią reikia patikrinti.</param>
+		/// <returns>Grąžina 'true' jeigu standarinė matrica yra pačioje pradžioje arba pačioje pabaigoje - antraip 'false'.</returns>
 		private bool IsTransformableToMatrixH(int[][] matrix)
 		{
-			// Todo: will not work if a given matrix has two columns in a row which can be the start of a standard matrix.
 			var numberOfCols = matrix[0].GetUpperBound(0) + 1;
 			var numberOfRows = matrix.GetUpperBound(0) + 1;
-			// We mark the position in only which a '1' is supposed to be (elsewhere should be '0').
+			// Pažymime poziciją, kurioje turi būti '1' (visur kitur turėtų būti '0').
 			var position = 0;
 			var result = false;
 
 			for (var c = 0; c < numberOfCols; c++)
 			{
-				var column = GetColumn(matrix, c);
-				if (ColumnContainsOnlyOne(column, position))
+				var column = GetColumnAsVector(matrix, c);
+				if (VectorContainsOnlyOne(column, position))
 				{
-					// In the next column the '1' should be a row lower.
+					// Kitame stulpelyje '1' turės būti eilute žemiau.
 					position++;
-					// When the standard matrix is found.
+					// Kuomet surandame standartinę matricą.
 					if (position == numberOfRows)
 					{
 						result = true;
@@ -184,7 +161,7 @@ namespace Logic
 				}
 				else
 				{
-					// The standard array must always begin with a '1' in the first position (zero index).
+					// Ieškome iš naujo.
 					position = 0;
 				}
 			}
@@ -192,15 +169,15 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Multiplies 2 vectors using mod 2.
+		/// Sudaugina du vektorius tarpusavyje moduliu 2.
 		/// </summary>
-		/// <param name="vector1">The first vector to be multiplied.</param>
-		/// <param name="vector2">The second vector to be multiplied.</param>
-		/// <returns>An int that is the multiplication result in mod 2.</returns>
+		/// <param name="vector1">Pirmasis vektorius daugybai.</param>
+		/// <param name="vector2">Antrasis vektorius daugybai.</param>
+		/// <returns>0 arba 1.</returns>
 		private int MultiplyVectors(int[] vector1, int[] vector2)
 		{
 			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
-				throw new ArgumentException("\nVectors have to be the same length!");
+				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio!");
 
 			var length = vector1.GetUpperBound(0) + 1;
 			var result = 0;
@@ -213,22 +190,20 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Check if a given matrix is useable.
+		/// Patikrina ar vartotojo pateikta matrica yra tinkama naudojimui.
 		/// </summary>
-		/// <param name="matrix">A matrix to be checked.</param>
-		/// <returns>'true' if the matrix is proper, 'false' if not.</returns>
+		/// <param name="matrix">Matrica, kurią reikia patikrinti.</param>
+		/// <returns>Grąžina 'true' jeigu matrica tinkanti - antraip 'false'.</returns>
 		private bool CheckIfProperMatrixGiven(int[][] matrix)
 		{
 			var length = matrix[0].GetUpperBound(0) + 1;
 			var dimension = matrix.GetUpperBound(0) + 1;
 
 			if (length != _cols)
-				throw new ArgumentException("\nThe length of vectors in the given matrix " +
-				                            "does not match the length provided to the constructor.");
+				throw new ArgumentException("\nPaduotos matricos ilgis nesutampa su paduotu matricos ilgio argumentu konstruktoriui.");
 
 			if (dimension != _rows)
-				throw new ArgumentException("\nThe dimension (number of vectors) in the given matrix " +
-				                            "does not match the dimension provided to the constructor.");
+				throw new ArgumentException("\nPaduotos matricos dimensija nesutampa su paduotu dimensijos argumentu konstruktoriui.");
 
 			for (var r = 0; r < dimension; r++)
 			{
@@ -238,7 +213,7 @@ namespace Logic
 				}
 				catch (Exception)
 				{
-					throw new ArgumentException("\nThe provided matrix contains a null row.");
+					throw new ArgumentException("\nPaduota matrica turi neinicializuotų (null) eilučių.");
 				}
 			}
 
@@ -249,37 +224,33 @@ namespace Logic
 			return true;
 		}
 
+		// Todo: will it work with a 1x1?
 		/// <summary>
-		/// Generates a matrix of specified dimensions with a standard matrix in it.
+		/// Sugeneruoja matricą nurodytų matmenų (su viduje esančia standartine matrica).
 		/// </summary>
-		/// <param name="length"></param>
-		/// <param name="dimension"></param>
-		/// <returns></returns>
+		/// <param name="length">Matricos ilgis.</param>
+		/// <param name="dimension">Matricos dimensija</param>
+		/// <returns>Sugeneruotą matricą.</returns>
 		private int[][] GenerateMatrix(int length, int dimension)
 		{
 			if (length == dimension)
-			{
 				return GenerateStandardMatrix(length);
-			}
-			// Todo: will it work with a 1x1?
-			// Generate the standard matrix.
-			int[][] standardMatrix = GenerateStandardMatrix(dimension);
-			// Generate the random matrix.
-			int[][] randomMatrix = GenerateRandomMatrix(rows: dimension, cols: length - dimension);
-			// Return the combination of them.
+
+			var standardMatrix = GenerateStandardMatrix(dimension);
+			var randomMatrix = GenerateRandomMatrix(rows: dimension, cols: length - dimension);
 			return CombineMatrices(standardMatrix, randomMatrix);
 		}
 
 		/// <summary>
-		/// Combines two matrices together to form a new one.
+		/// Sujungia dvi matricas į vieną.
 		/// </summary>
-		/// <param name="matrix1">The first matrix.</param>
-		/// <param name="matrix2">The second matrix.</param>
-		/// <returns>A new matrix.</returns>
+		/// <param name="matrix1">Pirmoji matrica sujungimui.</param>
+		/// <param name="matrix2">Antroji matrica sujungimui.</param>
+		/// <returns>Matrica, gauta sujungus pateiktas matricas.</returns>
 		private int[][] CombineMatrices(int[][] matrix1, int[][] matrix2)
 		{
 			if (matrix1.GetUpperBound(0) != matrix2.GetUpperBound(0))
-				throw new ArgumentException("\nThe dimensions of the matrices must be equal!");
+				throw new ArgumentException("\nMatricos dimensijos turi sutapti.");
 
 			var numberOfRows = matrix1.GetUpperBound(0) + 1;
 			var numberOfCols = matrix1[0].GetUpperBound(0) + 1 + matrix2[0].GetUpperBound(0) + 1;
@@ -287,23 +258,22 @@ namespace Logic
 
 			for (var r = 0; r < numberOfRows; r++)
 			{
-				// Create a new row.
 				var row = new int[numberOfCols];
-				// Store the current position when copying values.
 				var colIndex = 0;
-				// Copy values from the first matrix.
+
+				// Kopijuojame reikšmes iš pirmos matricos.
 				for (var c1 = 0; c1 <= matrix1[0].GetUpperBound(0); c1++)
 				{
 					row[colIndex] = matrix1[r][c1];
 					colIndex++;
 				}
-				// Copy the values from the second matrix.
+				// Kopijuojame reikšmes iš antros matricos.
 				for (var c2 = 0; c2 <= matrix2[0].GetUpperBound(0); c2++)
 				{
 					row[colIndex] = matrix2[r][c2];
 					colIndex++;
 				}
-				// Add the row to the matrix.
+				
 				matrix[r] = row;
 			}
 
@@ -311,11 +281,11 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Generates a matrix with random members between '1' and '0' of specified size.
+		/// Sugeneruoja atsitiktinę matricą nurodytų matmenų.
 		/// </summary>
-		/// <param name="rows">Number of rows in the matrix.</param>
-		/// <param name="cols">Number of cols in the matrix.</param>
-		/// <returns>A new matrix.</returns>
+		/// <param name="rows">Matricos eilučių skaičius.</param>
+		/// <param name="cols">Matricos stulpelių skaičius.</param>
+		/// <returns>Sugeneruota matrica.</returns>
 		private int[][] GenerateRandomMatrix(int rows, int cols)
 		{
 			var randomGenerator = new Random(DateTime.Now.Millisecond);
@@ -323,12 +293,11 @@ namespace Logic
 
 			for (var r = 0; r < rows; r++)
 			{
-				// Create a new row.
 				var vector = new int[cols];
-				// Randomly generate values for it.
+
 				for (var c = 0; c < cols; c++)
 					vector[c] = randomGenerator.Next(0, 2);
-				// Add the new row to the matrix.
+
 				matrix[r] = vector;
 			}
 
@@ -336,20 +305,18 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Generates a new standard matrix.
+		/// Sugeneruoja nurodyto dydžio standartinę matricą.
 		/// </summary>
-		/// <param name="size">What size the matrix should be (example 2x2 would be with 'size' = 2).</param>
-		/// <returns>A new standard matrix.</returns>
+		/// <param name="size">Matricos eilučių/stulpelių skaičius.</param>
+		/// <returns>Sugeneruotą standartinę matricą.</returns>
 		private int[][] GenerateStandardMatrix(int size)
 		{
 			var matrix = new int[size][];
+
 			for (var r = 0; r < size; r++)
 			{
-				// Create the new row.
 				var row = new int[size];
-				// Assign the only '1'.
 				row[r] = 1;
-				// Add the row to the matrix.
 				matrix[r] = row;
 			}
 
@@ -357,28 +324,28 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Checks if an array of ints has only one '1' in it and if it's in the specified position.
+		/// Patikrina ar duotame vektoriuje yra tik vienas '1' ir ar jis nurodytoje pozicijoje.
 		/// </summary>
-		/// <param name="column">Array of int to search through.</param>
-		/// <param name="position">The position in which a '1' is supposed to be.</param>
-		/// <returns>'true' if in the whole array a '1' is only in the specified position, 'false' otherwise.</returns>
-		private bool ColumnContainsOnlyOne(int[] column, int position)
+		/// <param name="vector">Vektorius, kurį reikia patikrinti.</param>
+		/// <param name="position">Pozicija, kurioje turėtų būti '1'.</param>
+		/// <returns>Grąžina 'true' jeigu tik nurodytoje pozicijoje yra '1' - antraip 'false'.</returns>
+		private bool VectorContainsOnlyOne(int[] vector, int position)
 		{
-			// Check if the array contains only one '1'.
-			if (column.Count(n => n == 1) != 1)
+			// Patikrina ar yra tik vienas '1'.
+			if (vector.Count(n => n == 1) != 1)
 				return false;
 
-			// Check if the only '1' is in the specified position.
-			return column[position] == 1;
+			// Patikrina ar jis nurodytoje pozicijoje.
+			return vector[position] == 1;
 		}
 
 		/// <summary>
-		/// Gets a specified column from a specified matrix.
+		/// Grąžina iš nurodytos matricos nurodytą stulpelį.
 		/// </summary>
-		/// <param name="matrix">The matrix from which to get the column.</param>
-		/// <param name="columnNumber">Index of which column to get (if you need the first column, you pass a zero).</param>
-		/// <returns></returns>
-		private int[] GetColumn(int[][] matrix, int columnNumber)
+		/// <param name="matrix">Matrica iš kurios reikės išimti stulpelį.</param>
+		/// <param name="columnNumber">Numeris norimo stulpelio (jeigu reikia pirmojo, paduodate 0).</param>
+		/// <returns>Nurodytą stulpelį kaip vektorių.</returns>
+		private int[] GetColumnAsVector(int[][] matrix, int columnNumber)
 		{
 			var numberOfRows = matrix.GetUpperBound(0) + 1;
 			var column = new int[numberOfRows];
@@ -389,18 +356,19 @@ namespace Logic
 			return column;
 		}
 
+		// Todo: palikti raštelį, jog kodas neveiks, jeigu G matricoje standartinė matrica nebus pačioje pradžioje.
+
 		/// <summary>
-		/// Separates the standard matrix from the 'other' matrix in the 'Matrix' and returns the 'other' matrix.
+		/// Atskiria standartinę matricą nuo 'kitos' ir grąžina ją (tą 'kitą').
 		/// </summary>
-		/// <returns>The 'other' matrix.</returns>
+		/// <returns>Ne standartinę matricos dalį.</returns>
 		private int[][] SeparateOtherMatrix()
 		{
-			// Todo: it will not work if the standard matrix is not at the beginning of the matrix.
 			var matrix = new int[_rows][];
 
-			// Since the standard matrix is a square we take the number of columns and subtract the square dimension.
+			// Kadangi standartinės matricos k = n, tai mes žinome, jog standartinė matrica pasibaigia k stulpelyje.
 			var numberOfColumns = _cols - _rows;
-			var index = 0; // For the new row.
+			var index = 0;
 
 			for (var r = 0; r < _rows; r++)
 			{
@@ -418,10 +386,11 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Twists the matrix in such a way that the rows become columns and vice versa.
+		/// Transponuoja matricą.
+		/// Stulpeliai tampa eilutėmis ir atvirkščiai.
 		/// </summary>
-		/// <param name="matrix">The matrix to be twisted.</param>
-		/// <returns>A twisted matrix.</returns>
+		/// <param name="matrix">Matricą, kurią reikia transponuoti.</param>
+		/// <returns>Transponuota matrica.</returns>
 		private int[][] TwistMatrix(int[][] matrix)
 		{
 			var rows = matrix.GetUpperBound(0) + 1;
@@ -438,22 +407,6 @@ namespace Logic
 				twisted[c] = twistedCol;
 			}
 			return twisted;
-		}
-
-		/// <summary>
-		/// Generates a vector of random weight but specified length.
-		/// </summary>
-		/// <param name="length">Length of the vector to be generated.</param>
-		/// <returns>A new vector.</returns>
-		private int[] GenerateVector(int length)
-		{
-			var vector = new int[length];
-			var generator = new Random(DateTime.Now.Millisecond);
-
-			for (var c = 0; c < length; c++)
-				vector[c] = generator.Next(0, 2);
-
-			return vector;
 		}
 	}
 }

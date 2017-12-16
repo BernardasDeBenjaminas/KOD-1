@@ -11,8 +11,8 @@ namespace Scenario1
 	{
 		private string _errorMessage = string.Empty; // Naudojamas klaidos žinutėms atvaizduoti.
 
-		private int _rows; // G matricos dimensija (k).
-		private int _cols; // G matricos Ilgis (n).
+		private int _rows; // '_matrixG' dimensija (k).
+		private int _cols; // '_matrixG' ilgis (n).
 
 		private int[][] _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
 		private MatrixG _matrixG; // G matrica (vartotojo įvesta arba kompiuterio sugeneruota).
