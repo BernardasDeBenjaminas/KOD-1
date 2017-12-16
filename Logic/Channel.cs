@@ -45,6 +45,30 @@ namespace Logic
 			return result;
 		}
 
+		/// <summary>
+		/// 0 - it matches, 1 - it doesn't match.
+		/// </summary>
+		/// <param name="original"></param>
+		/// <param name="changed"></param>
+		/// <returns></returns>
+		public int[] FindChanges(int[] original, int[] changed)
+		{
+
+			var length = original.GetUpperBound(0) + 1;
+
+			if (length != changed.GetUpperBound(0) + 1)
+				throw new ArgumentException("The vectors have to be the same length!");
+
+			var answer = new int[length];
+			for (var c = 0; c < length; c++)
+			{
+				answer[c] = original[c] != changed[c]
+					? answer[c] = 1
+					: answer[c] = 0;
+			}
+			return answer;
+		}
+
 
 		// PRIVATE
 

@@ -8,8 +8,6 @@ namespace Scenario1
 		{
 			var presenter = new Presenter();
 			presenter.Start();
-
-			Console.ReadKey();
 		}
 	}
 }

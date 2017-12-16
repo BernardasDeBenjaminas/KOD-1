@@ -4,31 +4,78 @@ using Logic;
 
 namespace Scenario1
 {
+	/// <summary>
+	/// Įjungia 1-ojo scenarijaus vartotojo sąsają.
+	/// </summary>
 	public class Presenter
 	{
-		private int _rows;
-		private int _cols;
-		private int[][] _tempMatrix;
-		private MatrixG _matrixG;
-		private string _errorMessage = string.Empty;
+		private string _errorMessage = string.Empty; // Naudojamas klaidos žinutėms atvaizduoti.
 
-		// CONSTRUCTOR
+		private int _rows; // G matricos dimensija (k).
+		private int _cols; // G matricos Ilgis (n).
 
-		public Presenter() { }
+		private int[][] _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
+		private MatrixG _matrixG; // G matrica (vartotojo įvesta arba kompiuterio sugeneruota).
+		private MatrixH _matrixH; // H matrica (gauta iš '_matrixG').
+
+		private Channel _channel; // Kanalas, kuriuo siųsiu vektorius.
+		private double _errorProbability; // Tikimybė kanale įvykti klaidai (p).
+		private int[] _errorVector; // Klaidos vektorius.
+
+		private int[] _originalVector;	// Vartotojo žodis, kurį siųsime kanalu.
+		private int[] _encodedVector;   // '_originalVector'  užkoduotas G matrica.
+		private int[] _distortedVector; // '_encodedVector'   išsiųstas kanalu (galimai iškraipytas).
+		private int[] _decodedVector;   // '_distortedVector' dekoduotas H matrica.
+		private int[] _receivedVector;  // '_decodedVector'   dekoduotas G matrica.
 
 
-		// PUBLIC
+		/// <summary>
+		/// Įjungia vartotojo sąsają.
+		/// </summary>
 		public void Start()
 		{
+			_errorProbability = GetErrorProbabilty();
+			_channel = new Channel(_errorProbability);
 			_cols = GetNumberOfCols();
 			_rows = GetNumberOfRows();
-			_matrixG = GetMatrix();
-			DisplayCurrentInformation();
+
+			if (AskYesOrNoQuestion("Ar norite įvesti generuojančią matricą patys (jeigu ne - ji bus sugeneruota už jus)?"))
+				LetUserEnterGMatrix();
+			else
+				_matrixG = new MatrixG(_cols, _rows);
+
+			_matrixH = _matrixG.GetMatrixH();
+
+			while (true)
+			{
+				_originalVector = GetVectorToSend();
+				_encodedVector = _matrixG.Encode(_originalVector);
+				_distortedVector = _channel.SendVectorThrough(_encodedVector);
+				_errorVector = _channel.FindChanges(_encodedVector, _distortedVector);
+
+				if (AskYesOrNoQuestion("Ar norite keisti iš kanalo gautą vektorių?"))
+					LetUserEnterErrorVector();
+
+				_decodedVector = _matrixH.Decode(_distortedVector);
+				_receivedVector = _matrixG.Decode(_decodedVector);
+
+				if (!AskYesOrNoQuestion("Ar norite siųsti dar vieną vektorių?"))
+					break;
+
+				_originalVector = null;
+				_encodedVector = null;
+				_distortedVector = null;
+				_errorVector = null;
+				_decodedVector = null;
+				_receivedVector = null;
+			}
 		}
 
 
-		// PRIVATE
-		// Todo: add comments and summary in Lithuanian.
+		/// <summary>
+		/// Per vartotojo sąsają priima G matricos ilgį (n).
+		/// </summary>
+		/// <returns>G matricos ilgį (n).</returns>
 		private int GetNumberOfCols()
 		{
 			while (true)
@@ -56,6 +103,10 @@ namespace Scenario1
 			}
 		}
 
+		/// <summary>
+		/// Per vartotojo sąsają priima G matricos dimensiją (k).
+		/// </summary>
+		/// <returns>G matricos dimensiją (k).</returns>
 		private int GetNumberOfRows()
 		{
 			while (true)
@@ -87,33 +138,138 @@ namespace Scenario1
 			}
 		}
 
-		private MatrixG GetMatrix()
+		/// <summary>
+		/// Per vartotojo sąsają priima tikimybę klaidai įvykti (p) siunčiant vektorių kanalu.
+		/// </summary>
+		/// <returns>Tikimybę įvykti klaidai kanale (p).</returns>
+		private double GetErrorProbabilty()
 		{
 			while (true)
 			{
 				DisplayCurrentInformation();
 
-				Console.Write("Ar norite įvesti generuojančią matricą patys (jeigu ne - ji bus sugeneruota už jus)? (y/n): ");
+				Console.Write("Įveskite klaidos tikimybę (p): ");
 				var input = Console.ReadLine();
 
-				if (input?.ToLower() != "y" && input?.ToLower() != "n")
-					_errorMessage = "Įveskite 'y', jeigu norite patys įvesti matricą, antraip 'n'.";
+				if (double.TryParse(input, out var probability))
+				{
+					if (probability > 1 || probability < 0)
+						_errorMessage = "Reikšmė privalo būti intervale [0;1]!";
+
+					else
+					{
+						_errorMessage = string.Empty;
+						return probability;
+					}
+				}
+				else
+					_errorMessage = "Leidžiama įvedimo forma: #.####!";
+				
+					Console.Clear();
+			}
+		}
+
+		/// <summary>
+		/// Per vartotojo sąsają priimta vektorių siuntimui kanalu.
+		/// </summary>
+		/// <returns>Vektorius, kurį turėsime siųsti kanalu (m).</returns>
+		private int[] GetVectorToSend()
+		{
+			while (true)
+			{
+				DisplayCurrentInformation();
+
+				Console.Write("Įveskite žodį, kurį norite siųsti kanalu: ");
+				var input = Console.ReadLine();
+
+				if (Regex.IsMatch(input, "^[0,1]{1,}$"))
+				{
+					if (input.Length != _rows)
+
+						_errorMessage = $"Vektoriaus ilgis privalo būti lygus {_rows}.";
+					else
+					{
+						_errorMessage = string.Empty;
+						return StringToIntArrayVector(input);
+					}
+				}
+
+				else
+					_errorMessage = "Leidžiami simboliai yra tik '0' ir '1'.";
+			}
+		}
+
+		/// <summary>
+		/// Per vartotojo sąsają priima atsakymą į užduotą klausimą.
+		/// </summary>
+		/// <param name="question">Klausimas, kurį norime užduoti vartotojui.</param>
+		/// <returns>Grąžinama 'true', jeigu atsakė 'taip' - antraip grąžinama 'false'.</returns>
+		private bool AskYesOrNoQuestion(string question)
+		{
+			while (true)
+			{
+				DisplayCurrentInformation();
+
+				Console.Write($"{question} (y/n): ");
+				var input = Console.ReadLine();
+
+				if (input.ToLower() != "y" && input.ToLower() != "n")
+					_errorMessage = "Įveskite 'y', jeigu norite keisti iš kanalo gautą vektorių, antraip 'n'.";
 
 				else
 				{
 					_errorMessage = string.Empty;
-					
-					return input.ToLower() == "y" 
-						? GetUserInputedMatrix()     // The user will input a personal matrix.
-						: new MatrixG(_cols, _rows); // The matrix will be generated randomly.
+					return input.ToLower() == "y";
 				}
 			}
 		}
 
-		private MatrixG GetUserInputedMatrix()
+		/// <summary>
+		/// (!) Leidžia vartotojui įvesti savo norimą klaidos vektorių. (!)
+		/// Per vartotojo sąsaja priima stulpelių numerius, kuriais pasinaudodami keisime 
+		/// '_errorVector' bei '_distortedVector' atitinkamų stulpelių reikšmes.
+		/// </summary>
+		private void LetUserEnterErrorVector()
 		{
-			_tempMatrix = new int[_rows][];	
+			while (true)
+			{
+				DisplayCurrentInformation();
 
+				Console.WriteLine("Spauskite skaičių, kuris atitiktų stulpelio numerį (paspaudus '1' pasikeis pirmoji pozicija).");
+				Console.WriteLine("Spauskite 'n', jeigu norite pabaigti keitimą.");
+				var input = Console.ReadKey(true).KeyChar + "";
+
+				if (input == "n")
+				{
+					_errorMessage = string.Empty;
+					return;
+				}
+
+				if (int.TryParse(input, out var col))
+				{
+					if (col > _cols || col < 1)
+						_errorMessage = $"Skaičius privalo būti tarp [1;{_cols}]!";
+
+					else
+					{
+						_errorVector[col - 1] = _errorVector[col - 1] ^ 1;
+						_distortedVector[col - 1] = _distortedVector[col - 1] ^ 1;
+					}
+				}
+				else
+					_errorMessage = "Galimos reikšmės tik sveikieji skaičiai!";
+			}
+		}
+
+		/// <summary>
+		/// (!) Leidžia vartotojui įvesti savo norimą G matricą. (!)
+		/// Per vartotojo sąsaja priima vektorius, kuriais pasinaudodami keisime
+		/// '_tempMatrix' ir sukursime '_matrixG'.
+		/// </summary>
+		private void LetUserEnterGMatrix()
+		{
+			_tempMatrix = new int[_rows][];
+			
 			for (var r = 0; r < _rows; r++)
 			{
 				DisplayCurrentInformation();
@@ -129,12 +285,7 @@ namespace Scenario1
 					}
 					else
 					{
-						var row = new int[_cols];
-						for (var c = 0; c < _cols; c++)
-						{
-							row[c] = (int)char.GetNumericValue(input[c]);
-						}
-						_tempMatrix[r] = row;
+						_tempMatrix[r] = StringToIntArrayVector(input);
 						_errorMessage = string.Empty;
 						continue;
 					}
@@ -147,25 +298,49 @@ namespace Scenario1
 			}
 			try
 			{
-				return new MatrixG(_cols, _rows, _tempMatrix);
+				_matrixG = new MatrixG(_cols, _rows, _tempMatrix);
 			}
 			catch (Exception e)
 			{
 				_errorMessage = e.Message;
-				return GetUserInputedMatrix();
+				LetUserEnterGMatrix();
 			}
-			
 		}
 
+		/// <summary>
+		/// Konvertuoja 'string' tipo vektorių į 'int[]' tipą.
+		/// </summary>
+		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
+		/// <returns>Konvertuotą vektorių.</returns>
+		private int[] StringToIntArrayVector(string vector)
+		{
+			var length = vector.Length;
+			var row = new int[length];
+			for (var c = 0; c < length; c++)
+			{
+				row[c] = (int)char.GetNumericValue(vector[c]);
+			}
+			return row;
+		}
+
+
+		/// <summary>
+		/// Į vartotojo sąsają išveda visą turimą informaciją apie vektorius ir matricas.
+		/// </summary>
 		private void DisplayCurrentInformation()
 		{
 			Console.Clear();
 
+			if (_errorProbability != 0)
+				ConsoleHelper.WriteInformation($"Klaidos tikimybė (p): {_errorProbability}");
+
 			if (_cols != 0)
-				ConsoleHelper.WriteInformation($"Ilgis (n): {_cols}.");
+				ConsoleHelper.WriteInformation($"Ilgis (n): {_cols}");
 
 			if (_rows != 0)
-				ConsoleHelper.WriteInformation($"Dimensija (k): {_rows}.");
+				ConsoleHelper.WriteInformation($"Dimensija (k): {_rows}");
+
+			Console.WriteLine();
 
 			if (_matrixG == null && _tempMatrix != null)
 			{
@@ -179,7 +354,30 @@ namespace Scenario1
 			}
 
 			if (_matrixG != null)
-				ConsoleHelper.WriteMatrix(_matrixG);
+				ConsoleHelper.WriteMatrix("G", _matrixG);
+
+			if (_matrixH != null)
+				ConsoleHelper.WriteMatrix("H", _matrixH);
+
+			if (_originalVector != null)
+				ConsoleHelper.WriteInformation($"Siunčiamas žodis (m)  = {string.Join(" ", _originalVector)}");
+
+			if (_encodedVector != null)
+				ConsoleHelper.WriteInformation($"Užkoduotas žodis (c)  = {string.Join(" ", _encodedVector)}");
+
+			//if (_errorVector != null)
+			//	ConsoleHelper.WriteInformation($"Klaidų vektorius (e) = {string.Join(" ", _errorVector)}.");
+
+			if (_distortedVector != null && _errorVector != null)
+				ConsoleHelper.WriteChanges($"Gautas vektorius (y)  =", _errorVector, _distortedVector);
+
+			if (_decodedVector != null)
+				ConsoleHelper.WriteInformation($"Dekoduotas žodis (c') = {string.Join(" ", _decodedVector)}");
+
+			if (_receivedVector != null)
+				ConsoleHelper.WriteInformation($"Galutinis žodis  (m') = {string.Join(" ", _receivedVector)}");
+
+			
 
 			if (_errorMessage != string.Empty)
 				ConsoleHelper.WriteError(_errorMessage);

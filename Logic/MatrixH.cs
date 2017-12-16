@@ -10,7 +10,7 @@ namespace Logic
 		//		Key - syndrome of coset leaders;
 		//		Value - weight of coset leader.
 		private readonly Dictionary<string, int> _translations = new Dictionary<string, int>();
-		private readonly int[][] _matrix; // The main matrix.
+		public readonly int[][] Matrix; // The main matrix.
 		private readonly int _rows; // Number of rows in 'Matrix'.
 		private readonly int _cols; // Number of columns in 'Matrix'.
 		private readonly Random _randomGenerator = new Random();
@@ -26,7 +26,7 @@ namespace Logic
 		{
 			if (CheckIfProperMatrixGiven(matrix))
 			{
-				_matrix = matrix;
+				Matrix = matrix;
 				_rows = matrix.GetUpperBound(0) + 1;
 				_cols = matrix[0].GetUpperBound(0) + 1;
 
@@ -50,7 +50,7 @@ namespace Logic
 			var syndrome = new int[_rows];
 			for (var r = 0; r < _rows; r++)
 			{
-				var row1 = _matrix[r];
+				var row1 = Matrix[r];
 				syndrome[r] = MultiplyVectors(row1, vector);
 			}
 			return syndrome;
@@ -73,6 +73,10 @@ namespace Logic
 				tuple[c] = 1;
 
 				// Step 2.
+
+				//		Key - syndrome of coset leaders;
+				//		Value - weight of coset leader.
+
 				var syndrome = GetSyndrome(result);
 				var key = string.Join("", syndrome);
 				var weight = _translations[key];
@@ -103,7 +107,7 @@ namespace Logic
 		public void DisplayMatrix()
 		{
 			ConsoleHelper.WriteInformation("The 'H' matrix.");
-			ConsoleHelper.WriteMatrix(_matrix);
+			ConsoleHelper.WriteMatrix(Matrix);
 		}
 
 
@@ -134,13 +138,29 @@ namespace Logic
 				var leader = new int[_cols];
 				leader[c] = 1;
 				var syndrome = GetSyndrome(leader);
-				_translations.Add(key: string.Join("", syndrome), value: GetWeight(leader));
+
+				var key = string.Join("", syndrome);
+				if (!_translations.ContainsKey(key))
+					_translations.Add(key: key, value: GetWeight(leader));
 			}
 
-			// Generate hard leaders (weight > 1).
-			while (numberOfLeaders > _translations.Count)
+			// Generate hard leaders (weight = 2).
+			// Todo: fix this magical number nonsense.
+			while (_translations.Count != 7)
 			{
 				var leader = GenerateLeader(_cols, 2);
+				var syndrome = GetSyndrome(leader);
+
+				// If a randomly generated leader has a new syndrome - we save it.
+				var key = string.Join("", syndrome);
+				if (!_translations.ContainsKey(key))
+					_translations.Add(key, GetWeight(leader));
+			}
+
+			// Generate harder leaders (weight = 3)
+			while (_translations.Count != 8)
+			{
+				var leader = GenerateLeader(_cols, 3);
 				var syndrome = GetSyndrome(leader);
 
 				// If a randomly generated leader has a new syndrome - we save it.

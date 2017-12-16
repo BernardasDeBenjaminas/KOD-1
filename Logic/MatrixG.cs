@@ -89,8 +89,8 @@ namespace Logic
 
 			var key = string.Join("", vector);
 
-			if (!_translations.ContainsKey(key))
-				throw new ArgumentException("\nThe passed in vector was never encoded in the first place!");
+			//if (!_translations.ContainsKey(key))
+			//	throw new ArgumentException("\nThe passed in vector was never encoded in the first place!");
 
 			return _translations[key];
 		}
