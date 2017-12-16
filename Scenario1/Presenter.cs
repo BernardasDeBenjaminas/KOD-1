@@ -51,7 +51,7 @@ namespace Scenario1
 				_originalVector = GetVectorToSend();
 				_encodedVector = _matrixG.Encode(_originalVector);
 				_distortedVector = _channel.SendVectorThrough(_encodedVector);
-				_errorVector = _channel.FindChanges(_encodedVector, _distortedVector);
+				_errorVector = _channel.FindDifferences(_encodedVector, _distortedVector);
 
 				if (AskYesOrNoQuestion("Ar norite keisti iš kanalo gautą vektorių?"))
 					LetUserEnterErrorVector();

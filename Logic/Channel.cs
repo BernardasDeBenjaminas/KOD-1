@@ -7,30 +7,25 @@ namespace Logic
 		public double ChanceOfError { get; set; }
 		public Random RandomGenerator { get; set; }
 
-		// CONSTRUCTOR
-
 		/// <summary>
-		/// Returns an object which simulates an unsafe channel for information sending.
+		/// Grąžina informacijos siuntimui simuliuojantį kanalą, kuris gali iškraipyti informaciją.
 		/// </summary>
-		/// <param name="chanceOfError">A value in the range of [0;1].</param>
-		/// <param name="randomGenerator">Random number generator based on the 'chanceOfError' probability.</param>
-		public Channel(double chanceOfError, Random randomGenerator = null)
+		/// <param name="chanceOfError">Tikimybė, jog kanale įvyks klaida.</param>
+		public Channel(double chanceOfError)
 		{
 			if (chanceOfError < 0 || chanceOfError > 1)
-				throw new ArgumentException("\nThe chance of error must be a value in the range of [0;1]!");
+				throw new ArgumentException("\nKlaidos tikimybė privalo būti skaičius iš šios aibės - [0;1]!");
 
 			ChanceOfError = chanceOfError;
-			RandomGenerator = randomGenerator ?? new Random(DateTime.Now.Millisecond);
+			RandomGenerator = new Random(DateTime.Now.Millisecond);
 		}
 
 
-		// PUBLIC
-
 		/// <summary>
-		/// Returns a vector with modified values based on the probability in 'ChanceOfError'.
+		/// Grąžina, atsižvelgiant į klaidos tikimybę, iškraipytą vektorių.
 		/// </summary>
-		/// <param name="vector">Vector to be sent through a potentially unsafe channel.</param>
-		/// <returns>A modified vector.</returns>
+		/// <param name="vector">Vektorius, kurį norima siųsti kanalu.</param>
+		/// <returns>Potencialiai iškraipytas vektorius (0 tampa 1 ir atvirkščiai).</returns>
 		public int[] SendVectorThrough(int[] vector)
 		{
 			var result = Clone(vector);
@@ -39,30 +34,31 @@ namespace Logic
 			for (var c = 0; c < length; c++)
 			{
 				if (RandomGenerator.NextDouble() <= ChanceOfError)
-					result[c] = result[c] ^ 1; // 0 would become 1 and 1 would become 0.
+					result[c] = result[c] ^ 1; // ^ = XOR.
 			}
 
 			return result;
 		}
 
 		/// <summary>
-		/// 0 - it matches, 1 - it doesn't match.
+		/// (!) Grąžinamas vektorius, kuris parodo kuriose pozicijose nesutampa reikšmės tarp pateiktų vektorių. (!)
+		/// Pateikus 010 ir 110 būtų grąžinama 100.
+		/// 0 - jeigu reikšmės stulpeliuose sutampa, 1 jeigu nesutampa.
 		/// </summary>
-		/// <param name="original"></param>
-		/// <param name="changed"></param>
-		/// <returns></returns>
-		public int[] FindChanges(int[] original, int[] changed)
+		/// <param name="vector1">Pirmasis vektorius palyginimui.</param>
+		/// <param name="vector2">Antrasis vektorius palyginimui.</param>
+		/// <returns>Vektorių sudarytą iš 0 ir 1.</returns>
+		public int[] FindDifferences(int[] vector1, int[] vector2)
 		{
+			var length = vector1.GetUpperBound(0) + 1;
 
-			var length = original.GetUpperBound(0) + 1;
-
-			if (length != changed.GetUpperBound(0) + 1)
+			if (length != vector2.GetUpperBound(0) + 1)
 				throw new ArgumentException("The vectors have to be the same length!");
 
 			var answer = new int[length];
 			for (var c = 0; c < length; c++)
 			{
-				answer[c] = original[c] != changed[c]
+				answer[c] = vector1[c] != vector2[c]
 					? answer[c] = 1
 					: answer[c] = 0;
 			}
@@ -70,13 +66,11 @@ namespace Logic
 		}
 
 
-		// PRIVATE
-
 		/// <summary>
-		/// Returns a shallow copy of a passed in vector.
+		/// Grąžina pateikto vektoriaus kopiją.
 		/// </summary>
-		/// <param name="vector">Vector whose values need to be copied without modifying the original.</param>
-		/// <returns>A vector with identical values.</returns>
+		/// <param name="vector">Vektorius, kurio reikšmes norima nukopijuoti.</param>
+		/// <returns>Vektorius su identiškomis reikšmėmis.</returns>
 		private int[] Clone(int[] vector)
 		{
 			// Todo: currently, the implementation matches the one found in 'MatrixH'.

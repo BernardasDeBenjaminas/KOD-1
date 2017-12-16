@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Scenario1
+﻿namespace Scenario1
 {
 	public class Program
 	{
