@@ -14,7 +14,6 @@ namespace Logic
 		private readonly int _rows;	    // 'Matrix' dimensija (k).
 		private readonly int _cols;     // 'Matrix' ilgis (n).
 
-		// Todo: test with 1.
 		/// <summary>
 		/// Grąžina generuojančią matricą (viduje jau yra standartinė matrica).
 		/// </summary>
@@ -85,6 +84,21 @@ namespace Logic
 		/// <returns>Grąžina kontrolinę matricą.</returns>
 		public MatrixH GetMatrixH()
 		{
+			// Jeigu kažkas pajuokavo ir užsinorėjo 1x1 matricos.
+			if (_cols == 1 && _rows == 1)
+			{
+				var smallMatrix = new int[1][];
+				smallMatrix[0] = new int[1] {1};
+				return new MatrixH(smallMatrix);
+			}
+
+			// Vienodų matmenų generuojanti matrica galima tik jei yra standartinė matrica.
+			if (_cols == _rows)
+			{
+				var squareMatrix = GenerateStandardMatrix(_cols);
+				return new MatrixH(squareMatrix);
+			}
+
 			var standardMatrix = GenerateStandardMatrix(_cols - _rows);
 			var separatedMatrix = SeparateOtherMatrix();
 			var twistedMatrix = TwistMatrix(separatedMatrix);
@@ -116,6 +130,11 @@ namespace Logic
 			}
 		}
 
+		/// <summary>
+		/// Konvertuoja 'string' tipo vektorių į 'int[]' tipą.
+		/// </summary>
+		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
+		/// <returns>Konvertuotą vektorių.</returns>
 		private int[] StringToIntArrayVector(string vector)
 		{
 			var length = vector.Length;
@@ -198,7 +217,6 @@ namespace Logic
 			return true;
 		}
 
-		// Todo: will it work with a 1x1?
 		/// <summary>
 		/// Sugeneruoja matricą nurodytų matmenų (su viduje esančia standartine matrica).
 		/// </summary>
@@ -329,9 +347,6 @@ namespace Logic
 
 			return column;
 		}
-
-		// Todo: palikti raštelį, jog kodas neveiks, jeigu G matricoje standartinė matrica nebus pačioje pradžioje.
-		// Todo: palikti raštelį, kad mano kodavimas vyksta 'MatrixG' klasėje, o dekodavimas 'MatrixH' klasėje, o ne atskirose klasėse.
 
 		/// <summary>
 		/// Atskiria standartinę matricą nuo 'kitos' ir grąžina ją (tą 'kitą').

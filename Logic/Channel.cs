@@ -65,7 +65,6 @@ namespace Logic
 			return answer;
 		}
 
-
 		/// <summary>
 		/// Grąžina pateikto vektoriaus kopiją.
 		/// </summary>
@@ -73,7 +72,6 @@ namespace Logic
 		/// <returns>Vektorius su identiškomis reikšmėmis.</returns>
 		private int[] Clone(int[] vector)
 		{
-			// Todo: currently, the implementation matches the one found in 'MatrixH'.
 			var length = vector.GetUpperBound(0) + 1;
 			var newVector = new int[length];
 

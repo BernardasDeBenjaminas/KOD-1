@@ -42,11 +42,9 @@
   <ItemGroup>
     <Compile Include="Channel.cs" />
     <Compile Include="ConsoleHelper.cs" />
-    <Compile Include="Enigma.cs" />
     <Compile Include="Field.cs" />
     <Compile Include="MatrixG.cs" />
     <Compile Include="MatrixH.cs" />
-    <Compile Include="Requirements.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

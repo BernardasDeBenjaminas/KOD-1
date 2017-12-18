@@ -19,7 +19,7 @@ namespace Scenario1
 		private MatrixH _matrixH; // H matrica (gauta iš '_matrixG').
 
 		private Channel _channel; // Kanalas, kuriuo siųsiu vektorius.
-		private double _errorProbability; // Tikimybė kanale įvykti klaidai (p).
+		private double _errorProbability = -1; // Tikimybė kanale įvykti klaidai (p). -1, nes 0 yra leidžiama reikšmė.
 		private int[] _errorVector; // Klaidos vektorius.
 
 		private int[] _originalVector;	// Vartotojo žodis, kurį siųsime kanalu.
@@ -332,7 +332,7 @@ namespace Scenario1
 		{
 			Console.Clear();
 
-			if (_errorProbability != 0)
+			if (_errorProbability != -1)
 				ConsoleHelper.WriteInformation($"Klaidos tikimybė (p): {_errorProbability}");
 
 			if (_cols != 0)

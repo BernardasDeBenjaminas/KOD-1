@@ -2,8 +2,15 @@
 
 namespace Logic
 {
+	/// <summary>
+	/// Klasė, kurios pagalba į konsolės langą spausdinamas spalvotas tekstas.
+	/// </summary>
 	public static class ConsoleHelper
 	{
+		/// <summary>
+		/// Spausdina duotą tekstą į konsolės langą raudona spalva.
+		/// </summary>
+		/// <param name="message">Žinutė, kurią norima spausdinti.</param>
 		public static void WriteError(string message)
 		{
 			Console.ForegroundColor = ConsoleColor.Red;
@@ -12,20 +19,10 @@ namespace Logic
 			Console.WriteLine();
 		}
 
-		public static void WriteCheck(string original, int[] input, string result, int[] output)
-		{
-			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine($"{original} must be {result}.");
-
-			Console.ForegroundColor = ConsoleColor.Yellow;
-			foreach (var number in input) Console.Write(number);
-			Console.Write(" outputs ");
-			foreach (var number in output) Console.Write(number);
-
-			Console.WriteLine();
-			Console.ForegroundColor = ConsoleColor.Gray;
-		}
-
+		/// <summary>
+		/// Spausdina duotą tekstą į konsolės langą balta spalva.
+		/// </summary>
+		/// <param name="message">Žinutė, kurią norima spausdinti.</param>
 		public static void WriteInformation(string message)
 		{
 			Console.ForegroundColor = ConsoleColor.White;
@@ -33,32 +30,11 @@ namespace Logic
 			Console.ForegroundColor = ConsoleColor.Gray;
 		}
 
-		public static void WriteWarning(string message)
-		{
-			Console.ForegroundColor = ConsoleColor.Yellow;
-			Console.WriteLine(message);
-			Console.ForegroundColor = ConsoleColor.Gray;
-		}
-
-		public static void WriteMatrix(int[][] matrix)
-		{
-			Console.ForegroundColor = ConsoleColor.Cyan;
-			Console.WriteLine();
-
-			var rows = matrix.GetUpperBound(0) + 1;
-			var cols = matrix[0].GetUpperBound(0) + 1;
-			for (var r = 0; r < rows; r++)
-			{
-				for (var c = 0; c < cols; c++)
-				{
-					Console.Write(matrix[r][c] + "  ");
-				}
-				Console.WriteLine();
-				Console.WriteLine();
-			}
-			Console.ForegroundColor = ConsoleColor.Gray;
-		}
-
+		/// <summary>
+		/// Spausdina duotą žinutę bei matricą į konsolė langą balta spalva.
+		/// </summary>
+		/// <param name="matrixName">Matricos pavadinimas.</param>
+		/// <param name="matrix">Matrica, kurią norima spausdinti.</param>
 		public static void WriteMatrix(string matrixName, MatrixG matrix)
 		{
 			var innerMatrix = matrix.Matrix;
@@ -71,7 +47,11 @@ namespace Logic
 
 			WriteInformation(message);
 		}
-
+		/// <summary>
+		/// Spausdina duotą žinutę bei matricą į konsolė langą balta spalva.
+		/// </summary>
+		/// <param name="matrixName">Matricos pavadinimas.</param>
+		/// <param name="matrix">Matrica, kurią norima spausdinti.</param>
 		public static void WriteMatrix(string matrixName, MatrixH matrix)
 		{
 			var innerMatrix = matrix.Matrix;
@@ -85,6 +65,14 @@ namespace Logic
 			WriteInformation(message);
 		}
 
+		/// <summary>
+		/// Spausdina duotą žinutę bei pateiktą vektorių į konsolės langą.
+		/// Atsižvelgiant į 'errorVector' narius bus skirtingomis spalvomis spausdinami 'originalVector' nariai.
+		/// Jeigu errorVector = 01, o originalVector = 11, tuomet bus atspausdinta žalias vienetas ir raudonas vienetas.
+		/// </summary>
+		/// <param name="introMessage">Žinutė, kurią norima spausdinti.</param>
+		/// <param name="errorVector">Vektorius, kurio reikšmės lems kokia spalva bus spausdinami 'originalVector' nariai.</param>
+		/// <param name="originalVector">Vektorius, kurio narius norima spausdinti spalvotai.</param>
 		public static void WriteChanges(string introMessage, int[] errorVector, int[] originalVector)
 		{
 			Console.ForegroundColor = ConsoleColor.White;
