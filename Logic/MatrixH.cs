@@ -6,22 +6,21 @@ namespace Logic
 {
 	public class MatrixH
 	{
-		// This is where I'll store coset leaders and their associated weights.
-		//		Key - syndrome of coset leaders;
-		//		Value - weight of coset leader.
+		// '_translations' kintamajame laikysiu klasių lyderių svorius ir jų sindromus:
+		//		Raktas  - klasės lyderio sindromas;
+		//		Reikšmė - klasės lyderio svoris.
 		private readonly Dictionary<string, int> _translations = new Dictionary<string, int>();
-		public readonly int[][] Matrix; // The main matrix.
-		private readonly int _rows; // Number of rows in 'Matrix'.
-		private readonly int _cols; // Number of columns in 'Matrix'.
-		private readonly Random _randomGenerator = new Random();
+		public readonly int[][] Matrix; // Pagrindinė matrica.
+		private readonly int _rows; // 'Matrix' dimensija (k).
+		private readonly int _cols; // 'Matrix' ilgis (n).
 
 
 		// CONSTRUCTOR
 
 		/// <summary>
-		/// Returns a new object of type 'MatrixH'
+		/// Apiformina pateiktą kontrolinę matricą tipo 'MatrixH' objektu.
 		/// </summary>
-		/// <param name="matrix">A matrix to be used as the base.</param>
+		/// <param name="matrix">Kontrolinė matrica, kuris bus apiforminta.</param>
 		public MatrixH(int[][] matrix)
 		{
 			if (CheckIfProperMatrixGiven(matrix))
@@ -30,7 +29,7 @@ namespace Logic
 				_rows = matrix.GetUpperBound(0) + 1;
 				_cols = matrix[0].GetUpperBound(0) + 1;
 
-				FillInnerTable();
+				FillTranslationsTable();
 			}
 		}
 
@@ -38,14 +37,62 @@ namespace Logic
 		// PUBLIC
 
 		/// <summary>
-		/// Calculates the syndrome of a given vector.
+		/// Dekoduojamas vektorius naudojantis 'Step-by-Step' algoritmu.
+		/// Grąžinamas vektorius, kurį galima gauti naudojantis generuojančia matrica.
 		/// </summary>
-		/// <param name="vector">Vector of which syndrome is to be calculted.</param>
-		/// <returns>A syndrome.</returns>
-		public int[] GetSyndrome(int[] vector)
+		/// <param name="vector">Vektorius, kurį norima dekoduoti.</param>
+		/// <returns>Dekoduotas vektorius.</returns>
+		public int[] Decode(int[] vector)
+		{
+			var result = Clone(vector); 
+
+			for (var c = 0; c < _cols; c++)
+			{
+				// 1. 'tuple' vektorius sudarytas iš nulių išskyrus vieną poziciją 
+				//	  (mūsų atveju pažymėtą 'c' kintamuoju, kuri turės vienetą).
+				var tuple = new int[_cols];
+				tuple[c] = 1;
+
+				// 2. Apskaičiuojame 'vector'-iaus sindromą.
+				//    Iš '_translations' kintamojo ištraukiame atitinkamo klasės lyderio svorį.
+				var syndrome = string.Join("", GetSyndrome(result));
+				var weight = _translations[syndrome];
+
+				// 3. Jeigu klasės lyderio svoris lygus 0, reiškia šis žodis ir buvo siųstas.
+				if (weight == 0)
+				{
+					break;
+				}
+
+				// 4. Jeigu ('vector' + 'tuple') sindromo svoris mažesnis už 'vector', 
+				//    tuomet 'vector' = 'vector' + 'tuple'.
+				var addedVectors = AddVectors(tuple, result);
+				var newSyndrome = string.Join("", GetSyndrome(addedVectors));
+				var newWeight = _translations[newSyndrome];
+				if (newWeight < weight)
+				{
+					result = addedVectors;
+				}
+
+				// 5. c = c + 1
+				//    'tuple' vektoriuje vienintelis vienetas dabar bus viena pozicija dešinėn pasislinkęs.
+			}
+
+			return result;
+		}
+
+
+		// PRIVATE
+
+		/// <summary>
+		/// Apskaičiuoja pateikto vektoriaus sindromą.
+		/// </summary>
+		/// <param name="vector">Vektorius, kurio sindromą norima apskaičiuoti.</param>
+		/// <returns>Sindromas.</returns>
+		private int[] GetSyndrome(int[] vector)
 		{
 			if (vector.GetUpperBound(0) + 1 != _cols)
-				throw new ArgumentException("\nThe length of the vector must match the number of columns in the matrix!");
+				throw new ArgumentException("\nPaduoto vektoriaus ilgis privalo sutapti su matricos ilgiu.");
 
 			var syndrome = new int[_rows];
 			for (var r = 0; r < _rows; r++)
@@ -57,170 +104,112 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Uses the 'Step-by-Step' algorithm to decode a vector.
+		/// Užpildo '_translations' kintamąjį su visais galimais klasių lyderių svoriais ir jų sindromais.
 		/// </summary>
-		/// <param name="vector">The vector to be decoded.</param>
-		/// <returns>The decoded vector.</returns>
-		public int[] Decode(int[] vector)
+		private void FillTranslationsTable()
 		{
-			var result = Clone(vector); // Clone the original vector.
-
-			// Todo: kodėl būtent tiek kartų?
-			for (var c = 0; c < _cols; c++)
-			{
-				// Step 1.
-				var tuple = new int[_cols];
-				tuple[c] = 1;
-
-				// Step 2.
-
-				//		Key - syndrome of coset leaders;
-				//		Value - weight of coset leader.
-
-				var syndrome = GetSyndrome(result);
-				var key = string.Join("", syndrome);
-				var weight = _translations[key];
-
-				// Step 3.
-				if (weight == 0)
-				{
-					break;
-				}
-
-				// Step 4.
-				var changedRow = AddVectors(tuple, result);
-				var newSyndrome = GetSyndrome(changedRow);
-				var newKey = string.Join("", newSyndrome);
-				var newWeight = _translations[newKey];
-				if (newWeight < weight)
-				{
-					result = changedRow;
-				}
-			}
-
-			return result;
-		}
-
-		/// <summary>
-		/// Prints out the matrix to the console.
-		/// </summary>
-		public void DisplayMatrix()
-		{
-			ConsoleHelper.WriteInformation("The 'H' matrix.");
-			ConsoleHelper.WriteMatrix(Matrix);
-		}
-
-
-		// PRIVATE
-
-		/// <summary>
-		/// Fills the '_translations' table with coset leaders' syndromes and leaders weights;
-		/// </summary>
-		private void FillInnerTable()
-		{
-			// Todo: make it work with any weight.
-			var numberOfLeaders = (int) Math.Pow(2, _rows);
-
-			// Generate extra easy leader (weight = 0).
-			var easyLeader = new int[_cols];
-			var easySyndrome = GetSyndrome(easyLeader);
-			_translations.Add(key: string.Join("", easySyndrome), value: GetWeight(easyLeader));
-
-			// Generate easy leaders (weight = 1).
-
-			// How many leaders will we need? count = Math.Pow(2, _rows) + 1
-			// How many leaders can we generate of weight 0? count = 1
-			// How many leaders can we generate of weight 1? count = _cols 
-			// How many leaders can we generate of weight 2? count = Math.Pow(2, _cols - 1) - 1
-
-			for (var c = _cols - 1; c >= 0; c--)
-			{
-				var leader = new int[_cols];
-				leader[c] = 1;
-				var syndrome = GetSyndrome(leader);
-
-				var key = string.Join("", syndrome);
-				if (!_translations.ContainsKey(key))
-					_translations.Add(key: key, value: GetWeight(leader));
-			}
-
-			// Generate hard leaders (weight = 2).
-			// Todo: fix this magical number nonsense.
-			while (_translations.Count != 7)
-			{
-				var leader = GenerateLeader(_cols, 2);
-				var syndrome = GetSyndrome(leader);
-
-				// If a randomly generated leader has a new syndrome - we save it.
-				var key = string.Join("", syndrome);
-				if (!_translations.ContainsKey(key))
-					_translations.Add(key, GetWeight(leader));
-			}
-
-			// Generate harder leaders (weight = 3)
-			while (_translations.Count != 8)
-			{
-				var leader = GenerateLeader(_cols, 3);
-				var syndrome = GetSyndrome(leader);
-
-				// If a randomly generated leader has a new syndrome - we save it.
-				var key = string.Join("", syndrome);
-				if (!_translations.ContainsKey(key))
-					_translations.Add(key, GetWeight(leader));
-			}
-		}
-
-		/// <summary>
-		/// Generates a random vector of required length and weight.
-		/// </summary>
-		/// <param name="length">Length of the vector.</param>
-		/// <param name="weight">Weight of the vector.</param>
-		/// <returns>A new leader.</returns>
-		private int[] GenerateLeader(int length, int weight)
-		{
-			var usedIndexes = new List<int>();
-			var leader = new int[length];
+			var leadersNeeded = (int) Math.Pow(2, _rows);
+			var weight = 0;
+			// Nes būnant ciklo cikle 'break' sakinys leidžia ištrūkti tik iš vieno.
+			var endThisNow = false;
 
 			while (true)
 			{
-				// Generate a random index.
-				var index = _randomGenerator.Next(0, length);
-				// If the index was never used before..
-				if (!usedIndexes.Contains(index))
+				// Pereiname per visus lyderius svorio 'weight'.
+				var leaders = GetPotentialLeaders(_cols, weight);
+				foreach (var leaderAsString in leaders)
 				{
-					// ..we use it.
-					leader[index] = 1;
-					// Mark the index as used.
-					usedIndexes.Add(index);
-					// Break if the leader has enough '1' in it.
-					if (usedIndexes.Count == weight)
-						break;
-				}
-			}
+					var leaderAsArray = StringToIntArrayVector(leaderAsString);
+					var syndromeAsArray = GetSyndrome(leaderAsArray);
+					var syndromeAsString = string.Join("", syndromeAsArray);
 
-			return leader;
+					if (_translations.ContainsKey(key: syndromeAsString)) 
+						continue;
+
+					_translations.Add(key: syndromeAsString, value: GetWeight(leaderAsArray));
+
+					if (_translations.Count == leadersNeeded)
+					{
+						endThisNow = true;
+						break;
+					}
+				}
+				if (endThisNow)
+					break;
+
+				// Neužteko svorio x lyderių tad dabar eisime per visus x + 1 svorio lyderius.
+				weight++;
+			}
 		}
 
 		/// <summary>
-		/// Returns the number of '1' found in the given vector.
+		/// Grąžina visus galimus nurodyto svorio bei ilgio vektorius.
 		/// </summary>
-		/// <param name="vector">A vector to be searched through.</param>
-		/// <returns>Weight of a vector.</returns>
-		private int GetWeight(int[] vector)
+		/// <param name="length">Vektorių ilgis.</param>
+		/// <param name="weight">Vektorių svoris.</param>
+		/// <returns>Sąrašą vektorių.</returns>
+		private static List<string> GetPotentialLeaders(int length, int weight)
+		{
+			var numberOfPossibleLeaders = (int) Math.Pow(2, length);
+			var leaders = new List<string>();
+
+			// Labai paprasta optimizacija.
+			if (weight == 0)
+			{
+				leaders.Add(new string('0', length));
+				return leaders;
+			}
+
+			for (var i = 0; i < numberOfPossibleLeaders; i++)
+			{
+				// Dešimtainį skaičių ('i') paverčia dvejetainiu ir iš priekio užpildo nuliais iki reikiamo ilgio.
+				var leader = Convert.ToString(value: i, toBase: 2)
+									.PadLeft(totalWidth: length, paddingChar: '0');
+				// Jeigu lyderio svoris sutampa su norimu - pridedame jį.
+				if (leader.Count(n => n == '1') == weight)
+					leaders.Add(leader);
+			}
+
+			return leaders;
+		}
+
+		// Todo: pavogta iš 'Presenter'.
+		/// <summary>
+		/// Konvertuoja 'string' tipo vektorių į 'int[]' tipą.
+		/// </summary>
+		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
+		/// <returns>Konvertuotą vektorių.</returns>
+		private static int[] StringToIntArrayVector(string vector)
+		{
+			var length = vector.Length;
+			var row = new int[length];
+			for (var c = 0; c < length; c++)
+			{
+				row[c] = (int) char.GetNumericValue(vector[c]);
+			}
+			return row;
+		}
+
+		/// <summary>
+		/// Suskaičiuoja kiek pateiktame vektoriuje yra vienetų.
+		/// </summary>
+		/// <param name="vector">Vektorius, kuriame reikia skaičiuoti vienetus.</param>
+		/// <returns>Vektoriaus svoris.</returns>
+		private static int GetWeight(int[] vector)
 		{
 			return vector.Count(n => n == 1);
 		}
 
 		/// <summary>
-		/// Add 2 vectors together using mod 2.
+		/// Sudeda du vektorius kartu moduliu 2.
 		/// </summary>
-		/// <param name="vector1">The first vector to be added.</param>
-		/// <param name="vector2">The second vector to be added.</param>
-		/// <returns>A vector that is the sum of 'vector1' and 'vector2' in mod 2.</returns>
-		private int[] AddVectors(int[] vector1, int[] vector2)
+		/// <param name="vector1">Pirmasis vektorius sudėčiai.</param>
+		/// <param name="vector2">Antrasis vektorius sudėčiai.</param>
+		/// <returns>Vektorius, kuris yra pateiktų vektorių sumos rezultatas.</returns>
+		private static int[] AddVectors(int[] vector1, int[] vector2)
 		{
 			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
-				throw new ArgumentException("\nVectors have to be the same length.");
+				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");
 
 			var length = vector1.GetUpperBound(0) + 1;
 			var result = new int[length];
@@ -232,16 +221,16 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Multiplies 2 vectors together using mod 2.
+		/// Sudaugina du vektorius kartu moduliu 2.
 		/// </summary>
-		/// <param name="vector1">The first vector to be multiplied.</param>
-		/// <param name="vector2">The second vector to be multiplied.</param>
-		/// <returns>An int that is the multiplication result in mod 2.</returns>
-		private int MultiplyVectors(int[] vector1, int[] vector2)
+		/// <param name="vector1">Pirmasis vektorius daugybai.</param>
+		/// <param name="vector2">Antrasis vektorius daugybai.</param>
+		/// <returns>Skaičius, kuris yra pateiktų vektorių sandaugos rezultatas.</returns>
+		private static int MultiplyVectors(int[] vector1, int[] vector2)
 		{
 			// Todo: currently, the implementation matches the one found in 'MatrixG'.
 			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
-				throw new ArgumentException("\nVectors have to be the same length!");
+				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");
 
 			var length = vector1.GetUpperBound(0) + 1;
 			var result = 0;
@@ -254,11 +243,11 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Returns a shallow copy of a passed in vector.
+		/// Grąžina vektorių su identiškomis reikšmėmis pateiktam klonavimui vektoriui.
 		/// </summary>
-		/// <param name="vector">Vector whose values need to be copied without modifying the original.</param>
-		/// <returns>A vector with identical values.</returns>
-		private int[] Clone(int[] vector)
+		/// <param name="vector">Vektorius, kurio reikšmes reikia nukopijuoti į atskirą vektorių.</param>
+		/// <returns>Vektorius su identiškomis reikšmėmis pateiktam vektoriui.</returns>
+		public int[] Clone(int[] vector)
 		{
 			var length = vector.GetUpperBound(0) + 1;
 			var newVector = new int[length];
@@ -270,14 +259,14 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Check if a given matrix is useable.
+		/// Patikrina ar paduota matrica tinkama naudojimui.
 		/// </summary>
-		/// <param name="matrix">A matrix to be checked.</param>
-		/// <returns>'true' if the matrix is proper, 'false' if not.</returns>
+		/// <param name="matrix">Matrica patikrinimui.</param>
+		/// <returns>Grąžina 'true' jeigu matrica tinkama - antraip 'false'.</returns>
 		private bool CheckIfProperMatrixGiven(int[][] matrix)
 		{
 			if (matrix == null)
-				throw new ArgumentNullException(nameof(matrix), "\nThe passed in matrix cannot be null!");
+				throw new ArgumentNullException(nameof(matrix), "\nPaduota matrica yra neinicializuota (null).");
 
 			for (var r = 0; r < matrix.GetUpperBound(0) + 1; r++)
 			{
@@ -287,7 +276,7 @@ namespace Logic
 				}
 				catch (Exception)
 				{
-					throw new ArgumentException("\nThe passed in matrix has null rows!");
+					throw new ArgumentException("\nPaduota matrica turi neinicializuotų (null) eilučių.");
 				}
 			}
 

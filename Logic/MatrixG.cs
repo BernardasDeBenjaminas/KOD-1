@@ -42,7 +42,7 @@ namespace Logic
 			else
 				Matrix = GenerateMatrix(length, dimension);
 
-			FillInnerTable();
+			FillTranslationsTable();
 		}
 
 
@@ -64,7 +64,6 @@ namespace Logic
 				var matrixCol = GetColumnAsVector(Matrix, c);
 				result[c] = MultiplyVectors(matrixCol, vector);
 			}
-
 			return result;
 		}
 
@@ -102,13 +101,14 @@ namespace Logic
 		/// <summary>
 		/// Užpildo '_translations' kintamąjį su visais žodžiais, kuriuos gali užkoduoti ir jų atitinkamomis užkoduotomis reikšmėmis.
 		/// </summary>
-		private void FillInnerTable()
+		private void FillTranslationsTable()
 		{
 			var index = 0;
 			while (true)
 			{
 				// Paduotą dešimtainį skaičių paverčia į dvejetainį, vėliau į 'string' ir užpildo '0' iki mums norimo ilgio.
-				var valueAsString = Convert.ToString(value: index, toBase: 2).PadLeft(totalWidth: _rows, paddingChar: '0');
+				var valueAsString = Convert.ToString(value: index, toBase: 2)
+										   .PadLeft(totalWidth: _rows, paddingChar: '0');
 				if (valueAsString.Length > _rows)
 					break;
 
@@ -125,10 +125,10 @@ namespace Logic
 		{
 			var length = vector.Length;
 			var row = new int[length];
+
 			for (var c = 0; c < length; c++)
-			{
 				row[c] = (int)char.GetNumericValue(vector[c]);
-			}
+
 			return row;
 		}
 
