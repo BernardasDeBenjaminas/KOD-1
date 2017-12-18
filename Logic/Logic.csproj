@@ -43,6 +43,7 @@
     <Compile Include="Channel.cs" />
     <Compile Include="ConsoleHelper.cs" />
     <Compile Include="Enigma.cs" />
+    <Compile Include="Field.cs" />
     <Compile Include="MatrixG.cs" />
     <Compile Include="MatrixH.cs" />
     <Compile Include="Requirements.cs" />

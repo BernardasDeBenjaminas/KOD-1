@@ -14,9 +14,6 @@ namespace Logic
 		private readonly int _rows; // 'Matrix' dimensija (k).
 		private readonly int _cols; // 'Matrix' ilgis (n).
 
-
-		// CONSTRUCTOR
-
 		/// <summary>
 		/// Apiformina pateiktą kontrolinę matricą tipo 'MatrixH' objektu.
 		/// </summary>
@@ -35,7 +32,6 @@ namespace Logic
 
 
 		// PUBLIC
-
 		/// <summary>
 		/// Dekoduojamas vektorius naudojantis 'Step-by-Step' algoritmu.
 		/// Grąžinamas vektorius, kurį galima gauti naudojantis generuojančia matrica.
@@ -66,7 +62,7 @@ namespace Logic
 
 				// 4. Jeigu ('vector' + 'tuple') sindromo svoris mažesnis už 'vector', 
 				//    tuomet 'vector' = 'vector' + 'tuple'.
-				var addedVectors = AddVectors(tuple, result);
+				var addedVectors = Field.Add(tuple, result);
 				var newSyndrome = string.Join("", GetSyndrome(addedVectors));
 				var newWeight = _translations[newSyndrome];
 				if (newWeight < weight)
@@ -81,9 +77,7 @@ namespace Logic
 			return result;
 		}
 
-
 		// PRIVATE
-
 		/// <summary>
 		/// Apskaičiuoja pateikto vektoriaus sindromą.
 		/// </summary>
@@ -98,7 +92,7 @@ namespace Logic
 			for (var r = 0; r < _rows; r++)
 			{
 				var row1 = Matrix[r];
-				syndrome[r] = MultiplyVectors(row1, vector);
+				syndrome[r] = Field.Multiply(row1, vector);
 			}
 			return syndrome;
 		}
@@ -153,14 +147,27 @@ namespace Logic
 			var numberOfPossibleLeaders = (int) Math.Pow(2, length);
 			var leaders = new List<string>();
 
-			// Labai paprasta optimizacija.
+			// Optimizacija kuomet svoris = 0.
 			if (weight == 0)
 			{
 				leaders.Add(new string('0', length));
 				return leaders;
 			}
 
-			for (var i = 0; i < numberOfPossibleLeaders; i++)
+			// Optimizacija kuomet svoris = 1.
+			if (weight == 1)
+			{
+				for (var i = 0; i < length; i++)
+				{
+					var leader = new int[length];
+					leader[i] = 1;
+					leaders.Add(string.Join("", leader));
+				}
+				return leaders;
+			}
+
+			// Trejetas yra pirmasis dvejetainis skaičius, kurio svoris lygus dviems.
+			for (var i = 3; i < numberOfPossibleLeaders; i++)
 			{
 				// Dešimtainį skaičių ('i') paverčia dvejetainiu ir iš priekio užpildo nuliais iki reikiamo ilgio.
 				var leader = Convert.ToString(value: i, toBase: 2)
@@ -173,7 +180,6 @@ namespace Logic
 			return leaders;
 		}
 
-		// Todo: pavogta iš 'Presenter'.
 		/// <summary>
 		/// Konvertuoja 'string' tipo vektorių į 'int[]' tipą.
 		/// </summary>
@@ -198,48 +204,6 @@ namespace Logic
 		private static int GetWeight(int[] vector)
 		{
 			return vector.Count(n => n == 1);
-		}
-
-		/// <summary>
-		/// Sudeda du vektorius kartu moduliu 2.
-		/// </summary>
-		/// <param name="vector1">Pirmasis vektorius sudėčiai.</param>
-		/// <param name="vector2">Antrasis vektorius sudėčiai.</param>
-		/// <returns>Vektorius, kuris yra pateiktų vektorių sumos rezultatas.</returns>
-		private static int[] AddVectors(int[] vector1, int[] vector2)
-		{
-			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
-				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");
-
-			var length = vector1.GetUpperBound(0) + 1;
-			var result = new int[length];
-
-			for (var c = 0; c < length; c++)
-				result[c] = (vector1[c] + vector2[c]) % 2;
-
-			return result;
-		}
-
-		/// <summary>
-		/// Sudaugina du vektorius kartu moduliu 2.
-		/// </summary>
-		/// <param name="vector1">Pirmasis vektorius daugybai.</param>
-		/// <param name="vector2">Antrasis vektorius daugybai.</param>
-		/// <returns>Skaičius, kuris yra pateiktų vektorių sandaugos rezultatas.</returns>
-		private static int MultiplyVectors(int[] vector1, int[] vector2)
-		{
-			// Todo: currently, the implementation matches the one found in 'MatrixG'.
-			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
-				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");
-
-			var length = vector1.GetUpperBound(0) + 1;
-			var result = 0;
-
-			for (var c = 0; c < length; c++)
-				result += vector1[c] * vector2[c];
-			result %= 2;
-
-			return result;
 		}
 
 		/// <summary>

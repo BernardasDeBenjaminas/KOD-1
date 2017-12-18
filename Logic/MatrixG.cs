@@ -14,8 +14,6 @@ namespace Logic
 		private readonly int _rows;	    // 'Matrix' dimensija (k).
 		private readonly int _cols;     // 'Matrix' ilgis (n).
 
-
-		// CONSTRUCTOR
 		// Todo: test with 1.
 		/// <summary>
 		/// Grąžina generuojančią matricą (viduje jau yra standartinė matrica).
@@ -47,7 +45,6 @@ namespace Logic
 
 
 		// PUBLIC 
-
 		/// <summary>
 		/// Užkoduoja vektorių pasinaudodamas generuojančia matrica.
 		/// </summary>
@@ -62,7 +59,7 @@ namespace Logic
 			for (var c = 0; c < _cols; c++)
 			{
 				var matrixCol = GetColumnAsVector(Matrix, c);
-				result[c] = MultiplyVectors(matrixCol, vector);
+				result[c] = Field.Multiply(matrixCol, vector);
 			}
 			return result;
 		}
@@ -97,7 +94,6 @@ namespace Logic
 
 
 		// PRIVATE
-
 		/// <summary>
 		/// Užpildo '_translations' kintamąjį su visais žodžiais, kuriuos gali užkoduoti ir jų atitinkamomis užkoduotomis reikšmėmis.
 		/// </summary>
@@ -120,7 +116,6 @@ namespace Logic
 			}
 		}
 
-		// Todo: pavogta iš 'Presenter'.
 		private int[] StringToIntArrayVector(string vector)
 		{
 			var length = vector.Length;
@@ -165,27 +160,6 @@ namespace Logic
 					position = 0;
 				}
 			}
-			return result;
-		}
-
-		/// <summary>
-		/// Sudaugina du vektorius tarpusavyje moduliu 2.
-		/// </summary>
-		/// <param name="vector1">Pirmasis vektorius daugybai.</param>
-		/// <param name="vector2">Antrasis vektorius daugybai.</param>
-		/// <returns>0 arba 1.</returns>
-		private int MultiplyVectors(int[] vector1, int[] vector2)
-		{
-			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
-				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio!");
-
-			var length = vector1.GetUpperBound(0) + 1;
-			var result = 0;
-
-			for (var c = 0; c < length; c++)
-				result += vector1[c] * vector2[c];
-			result %= 2;
-
 			return result;
 		}
 
@@ -357,6 +331,7 @@ namespace Logic
 		}
 
 		// Todo: palikti raštelį, jog kodas neveiks, jeigu G matricoje standartinė matrica nebus pačioje pradžioje.
+		// Todo: palikti raštelį, kad mano kodavimas vyksta 'MatrixG' klasėje, o dekodavimas 'MatrixH' klasėje, o ne atskirose klasėse.
 
 		/// <summary>
 		/// Atskiria standartinę matricą nuo 'kitos' ir grąžina ją (tą 'kitą').

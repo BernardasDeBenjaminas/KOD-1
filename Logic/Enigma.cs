@@ -7,8 +7,8 @@ namespace Logic
 	{
 		private readonly int _rows;	// n
 		private readonly int _cols; // k
-		private readonly MatrixG _matrixG; // G
-		private readonly MatrixH _matrixH;
+		private readonly MatrixG _matrixG; // Generuojanti matrica.
+		private readonly MatrixH _matrixH; // Kontrolinė matrica.
 
 
 		// CONSTRUCTOR

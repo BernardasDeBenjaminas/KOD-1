@@ -29,6 +29,7 @@ namespace Scenario1
 		private int[] _receivedVector;  // '_decodedVector'   dekoduotas G matrica.
 
 
+		// PUBLIC
 		/// <summary>
 		/// Įjungia vartotojo sąsają.
 		/// </summary>
@@ -72,6 +73,7 @@ namespace Scenario1
 		}
 
 
+		// PRIVATE
 		/// <summary>
 		/// Per vartotojo sąsają priima G matricos ilgį (n).
 		/// </summary>
@@ -323,7 +325,6 @@ namespace Scenario1
 			return row;
 		}
 
-
 		/// <summary>
 		/// Į vartotojo sąsają išveda visą turimą informaciją apie vektorius ir matricas.
 		/// </summary>
@@ -365,9 +366,6 @@ namespace Scenario1
 			if (_encodedVector != null)
 				ConsoleHelper.WriteInformation($"Užkoduotas žodis (c)  = {string.Join(" ", _encodedVector)}");
 
-			//if (_errorVector != null)
-			//	ConsoleHelper.WriteInformation($"Klaidų vektorius (e) = {string.Join(" ", _errorVector)}.");
-
 			if (_distortedVector != null && _errorVector != null)
 				ConsoleHelper.WriteChanges($"Gautas vektorius (y)  =", _errorVector, _distortedVector);
 
@@ -376,8 +374,6 @@ namespace Scenario1
 
 			if (_receivedVector != null)
 				ConsoleHelper.WriteInformation($"Galutinis žodis  (m') = {string.Join(" ", _receivedVector)}");
-
-			
 
 			if (_errorMessage != string.Empty)
 				ConsoleHelper.WriteError(_errorMessage);
