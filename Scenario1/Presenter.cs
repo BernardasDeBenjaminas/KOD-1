@@ -89,8 +89,8 @@ namespace Scenario1
 
 				if (int.TryParse(input, out var cols))
 				{
-					if (cols < 1)
-						_errorMessage = "Reikšmė privalo būti teigiamas skaičius!";
+					if (cols < 2)
+						_errorMessage = "Reikšmė privalo būti didesnė už 1!";
 
 					else
 					{
@@ -121,10 +121,13 @@ namespace Scenario1
 				if (int.TryParse(input, out var rows))
 				{
 					if (rows < 1)
-						_errorMessage = "Reikšmė privalo būti teigiamas skaičius!";
+						_errorMessage = "Reikšmė privalo būti didesnė už 0!";
+
+					else if (rows == _cols)
+						_errorMessage = $"Reikšmė negali sutapti su ilgiu ({_cols})!";
 
 					else if (rows > _cols)
-						_errorMessage = "Dimensija negali būti mažesnė už kodo ilgį!";
+						_errorMessage = "Reikšmė negali būti didesnė už kodo ilgį!";
 
 					else
 					{
@@ -156,7 +159,7 @@ namespace Scenario1
 				if (double.TryParse(input, out var probability))
 				{
 					if (probability > 1 || probability < 0)
-						_errorMessage = "Reikšmė privalo būti intervale [0;1]!";
+						_errorMessage = "Reikšmė privalo būti intervale [0;1] (ar įvedėte skaičių su kableliu?)!";
 
 					else
 					{
@@ -165,7 +168,7 @@ namespace Scenario1
 					}
 				}
 				else
-					_errorMessage = "Leidžiama įvedimo forma: #.####!";
+					_errorMessage = "Leidžiama įvedimo forma: #.#### (taškas, ne kablelis)!";
 				
 					Console.Clear();
 			}

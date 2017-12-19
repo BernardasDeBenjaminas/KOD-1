@@ -6,10 +6,6 @@ namespace Logic
 {
 	public class MatrixG
 	{
-		// '_translations' kintamajame laikysiu galimus užkoduoti žodžius ir jų užkoduotas reikšmes:
-		//		Raktas  - užkoduotas žodis;
-		//		Reikšmė - originalus žodis.
-		private readonly Dictionary<string, int[]> _translations = new Dictionary<string, int[]>(); 
 		public readonly int[][] Matrix; // Pagrindinė matrica.
 		private readonly int _rows;	    // 'Matrix' dimensija (k).
 		private readonly int _cols;     // 'Matrix' ilgis (n).
@@ -22,14 +18,17 @@ namespace Logic
 		/// <param name="matrix">Vartotojo norima matrica naudojimui (jeigu nebus pateikta - kodas pats sugeneruos ją).</param>
 		public MatrixG(int length, int dimension, int[][] matrix = null)
 		{
-			if (length < 1)
-				throw new ArgumentException("\nMatricos ilgis privalo būti 1 arba daugiau!");
+			if (length < 2)
+				throw new ArgumentException("\nMatricos ilgis privalo būti 2 arba daugiau.");
 
 			if (dimension < 1)
-				throw new ArgumentException("\nMatricos dimensija privalo būti 1 arba daugiau!");
+				throw new ArgumentException("\nMatricos dimensija privalo būti 1 arba daugiau.");
+
+			if (length == dimension)
+				throw new ArgumentException("\nMatricos ilgis negali sutapti sutapti su jos dimensija.");
 
 			if (length < dimension)
-				throw new ArgumentException("\nMatricos ilgis negali būti mažesnis už jos dimensiją!");
+				throw new ArgumentException("\nMatricos ilgis negali būti mažesnis už jos dimensiją.");
 
 			_rows = dimension;
 			_cols = length;
@@ -38,8 +37,6 @@ namespace Logic
 				Matrix = matrix;
 			else
 				Matrix = GenerateMatrix(length, dimension);
-
-			FillTranslationsTable();
 		}
 
 
@@ -52,7 +49,7 @@ namespace Logic
 		public int[] Encode(int[] vector)
 		{
 			if (vector.GetUpperBound(0) + 1 != _rows)
-				throw new ArgumentException("\nVektoriaus ilgis privalo sutapti su matricos dimensija!");
+				throw new ArgumentException("\nVektoriaus ilgis privalo sutapti su matricos dimensija.");
 
 			var result = new int[_cols];
 			for (var c = 0; c < _cols; c++)
@@ -71,11 +68,15 @@ namespace Logic
 		public int[] Decode(int[] vector)
 		{
 			if (vector.GetUpperBound(0) + 1 != _cols)
-				throw new ArgumentException("\nPateikto vektoriaus ilgis privalo sutapti su matricos ilgiu!");
+				throw new ArgumentException("\nPateikto vektoriaus ilgis privalo sutapti su matricos ilgiu.");
 
-			// Iš '_translations' kintamojo tiesiog ištraukiame žodį, kurio kuoduotą versiją turime.
-			var key = string.Join("", vector);
-			return _translations[key];
+			var decoded = new int[_rows];
+
+			// Kokia esamos matricos dimensija, tiek ir paimame bitų.
+			for (var c = 0; c < _rows; c++)
+				decoded[c] = vector[c];
+
+			return decoded;
 		}
 
 		/// <summary>
@@ -84,21 +85,6 @@ namespace Logic
 		/// <returns>Grąžina kontrolinę matricą.</returns>
 		public MatrixH GetMatrixH()
 		{
-			// Jeigu kažkas pajuokavo ir užsinorėjo 1x1 matricos.
-			if (_cols == 1 && _rows == 1)
-			{
-				var smallMatrix = new int[1][];
-				smallMatrix[0] = new int[1] {1};
-				return new MatrixH(smallMatrix);
-			}
-
-			// Vienodų matmenų generuojanti matrica galima tik jei yra standartinė matrica.
-			if (_cols == _rows)
-			{
-				var squareMatrix = GenerateStandardMatrix(_cols);
-				return new MatrixH(squareMatrix);
-			}
-
 			var standardMatrix = GenerateStandardMatrix(_cols - _rows);
 			var separatedMatrix = SeparateOtherMatrix();
 			var twistedMatrix = TwistMatrix(separatedMatrix);
@@ -109,45 +95,8 @@ namespace Logic
 
 		// PRIVATE
 		/// <summary>
-		/// Užpildo '_translations' kintamąjį su visais žodžiais, kuriuos gali užkoduoti ir jų atitinkamomis užkoduotomis reikšmėmis.
-		/// </summary>
-		private void FillTranslationsTable()
-		{
-			var index = 0;
-			while (true)
-			{
-				// Paduotą dešimtainį skaičių paverčia į dvejetainį, vėliau į 'string' ir užpildo '0' iki mums norimo ilgio.
-				var valueAsString = Convert.ToString(value: index, toBase: 2)
-										   .PadLeft(totalWidth: _rows, paddingChar: '0');
-				if (valueAsString.Length > _rows)
-					break;
-
-				index++;
-				var valueAsArray = StringToIntArrayVector(valueAsString);
-				var keyAsArray = Encode(valueAsArray);
-				var keyAsString = string.Join("", keyAsArray);
-				_translations.Add(keyAsString, valueAsArray);
-			}
-		}
-
-		/// <summary>
-		/// Konvertuoja 'string' tipo vektorių į 'int[]' tipą.
-		/// </summary>
-		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
-		/// <returns>Konvertuotą vektorių.</returns>
-		private int[] StringToIntArrayVector(string vector)
-		{
-			var length = vector.Length;
-			var row = new int[length];
-
-			for (var c = 0; c < length; c++)
-				row[c] = (int)char.GetNumericValue(vector[c]);
-
-			return row;
-		}
-
-		/// <summary>
 		/// Patikrina ar pateiktą matricą galima paversti į kontrolinę matricą.
+		/// ! Standartinė matrica privalo prasidėti su pirmuoju stulpeliu !
 		/// </summary>
 		/// <param name="matrix">Matrica, kurią reikia patikrinti.</param>
 		/// <returns>Grąžina 'true' jeigu standarinė matrica yra pačioje pradžioje arba pačioje pabaigoje - antraip 'false'.</returns>
@@ -155,9 +104,9 @@ namespace Logic
 		{
 			var numberOfCols = matrix[0].GetUpperBound(0) + 1;
 			var numberOfRows = matrix.GetUpperBound(0) + 1;
-			// Pažymime poziciją, kurioje turi būti '1' (visur kitur turėtų būti '0').
-			var position = 0;
 			var result = false;
+			// Seksime kurioje stulpelio vietoje yra vienetas.
+			var position = 0;
 
 			for (var c = 0; c < numberOfCols; c++)
 			{
@@ -166,18 +115,16 @@ namespace Logic
 				{
 					// Kitame stulpelyje '1' turės būti eilute žemiau.
 					position++;
-					// Kuomet surandame standartinę matricą.
+
 					if (position == numberOfRows)
 					{
 						result = true;
 						break;
 					}
 				}
+
 				else
-				{
-					// Ieškome iš naujo.
-					position = 0;
-				}
+					break;
 			}
 			return result;
 		}
@@ -211,8 +158,8 @@ namespace Logic
 			}
 
 			if (!IsTransformableToMatrixH(matrix))
-				throw new ArgumentException("\nPateikta matrica neturi savyje standartinės formos matricos " +
-				                            "(nebus galima gauti kontrolinės (H) matricos).");
+				throw new ArgumentException("\nNepavyko surasti pateiktoje matricoje standartinės formos matricos." +
+				                            "\nPatikrinkite ar ji prasideda nuo kairiausio stulpelio.");
 
 			return true;
 		}
@@ -225,9 +172,6 @@ namespace Logic
 		/// <returns>Sugeneruotą matricą.</returns>
 		private int[][] GenerateMatrix(int length, int dimension)
 		{
-			if (length == dimension)
-				return GenerateStandardMatrix(length);
-
 			var standardMatrix = GenerateStandardMatrix(dimension);
 			var randomMatrix = GenerateRandomMatrix(rows: dimension, cols: length - dimension);
 			return CombineMatrices(standardMatrix, randomMatrix);
@@ -390,10 +334,10 @@ namespace Logic
 			for (var c = 0; c < cols; c++)
 			{
 				var twistedCol = new int[rows];
+
 				for (var r = 0; r < rows; r++)
-				{
 					twistedCol[r] = matrix[r][c];
-				}
+
 				twisted[c] = twistedCol;
 			}
 			return twisted;
