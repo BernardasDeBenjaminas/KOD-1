@@ -41,6 +41,7 @@ namespace Logic
 
 
 		// PUBLIC 
+		// Todo: ar verta padaryti, kad kaip argumentą priimtų string'ą?
 		/// <summary>
 		/// Užkoduoja vektorių pasinaudodamas generuojančia matrica.
 		/// </summary>
@@ -59,14 +60,6 @@ namespace Logic
 			}
 			return result;
 		}
-
-		//public byte[] Encode(byte[] vector)
-		//{
-		//	if (vector.GetUpperBound(0) != _rows)
-		//		throw new ArgumentException("Vektoriaus ilgis privalo sutapti su matricos dimensija.");
-
-			
-		//}
 
 		/// <summary>
 		/// Dekoduoja vektorių.
