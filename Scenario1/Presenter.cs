@@ -11,6 +11,7 @@ namespace Scenario1
 	public class Presenter
 	{
 		private string _errorMessage = string.Empty; // Naudojamas klaidos žinutėms atvaizduoti.
+		private Validator _validator = new Validator(); // Todo: add a description.
 
 		private int _rows; // '_matrixG' dimensija (k).
 		private int _cols; // '_matrixG' ilgis (n).
@@ -76,6 +77,24 @@ namespace Scenario1
 
 		// PRIVATE
 		/// <summary>
+		/// Per vartotojo sąsają priima tikimybę klaidai įvykti (p) siunčiant vektorių kanalu.
+		/// </summary>
+		/// <returns>Tikimybę įvykti klaidai kanale (p).</returns>
+		private double GetErrorProbabilty()
+		{
+			while (true)
+			{
+				DisplayCurrentInformation();
+
+				Console.Write("Įveskite klaidos tikimybę (p): ");
+				var input = Console.ReadLine();
+
+				try                 { return _validator.ValidateErrorProbability(input); }
+				catch (Exception e) { _errorMessage = e.Message; }
+			}
+		}
+
+		/// <summary>
 		/// Per vartotojo sąsają priima G matricos ilgį (n).
 		/// </summary>
 		/// <returns>G matricos ilgį (n).</returns>
@@ -88,21 +107,8 @@ namespace Scenario1
 				Console.Write("Įveskite kodo ilgį (n): ");
 				var input = Console.ReadLine();
 
-				if (int.TryParse(input, out var cols))
-				{
-					if (cols < 2)
-						_errorMessage = "Reikšmė privalo būti didesnė už 1!";
-
-					else
-					{
-						_errorMessage = string.Empty;
-						return cols;
-					}
-				}
-				else
-					_errorMessage = "Galimos reikšmės tik sveikieji skaičiai!";
-
-				Console.Clear();
+				try                 { return _validator.ValidateNumberOfCols(input); }	
+				catch (Exception e) { _errorMessage = e.Message; }
 			}
 		}
 
@@ -119,64 +125,13 @@ namespace Scenario1
 				Console.Write("Įveskite dimensiją (k): ");
 				var input = Console.ReadLine();
 
-				if (int.TryParse(input, out var rows))
-				{
-					if (rows < 1)
-						_errorMessage = "Reikšmė privalo būti didesnė už 0!";
-
-					else if (rows == _cols)
-						_errorMessage = $"Reikšmė negali sutapti su ilgiu ({_cols})!";
-
-					else if (rows > _cols)
-						_errorMessage = "Reikšmė negali būti didesnė už kodo ilgį!";
-
-					else
-					{
-						_errorMessage = string.Empty;
-						return rows;
-					}
-				}
-
-				else
-					_errorMessage = "Galimos reikšmės tik sveikieji skaičiai!";
-
-				Console.Clear();
+				try                 { return _validator.ValidateNumberOfRows(input); }
+				catch (Exception e) { _errorMessage = e.Message; }
 			}
 		}
-
+		
 		/// <summary>
-		/// Per vartotojo sąsają priima tikimybę klaidai įvykti (p) siunčiant vektorių kanalu.
-		/// </summary>
-		/// <returns>Tikimybę įvykti klaidai kanale (p).</returns>
-		private double GetErrorProbabilty()
-		{
-			while (true)
-			{
-				DisplayCurrentInformation();
-
-				Console.Write("Įveskite klaidos tikimybę (p): ");
-				var input = Console.ReadLine();
-
-				if (double.TryParse(input, out var probability))
-				{
-					if (probability > 1 || probability < 0)
-						_errorMessage = "Reikšmė privalo būti intervale [0;1] (ar įvedėte skaičių su kableliu?)!";
-
-					else
-					{
-						_errorMessage = string.Empty;
-						return probability;
-					}
-				}
-				else
-					_errorMessage = "Leidžiama įvedimo forma: #.#### (taškas, ne kablelis)!";
-				
-					Console.Clear();
-			}
-		}
-
-		/// <summary>
-		/// Per vartotojo sąsają priimta vektorių siuntimui kanalu.
+		/// Per vartotojo sąsają priima vektorių siuntimui kanalu.
 		/// </summary>
 		/// <returns>Vektorius, kurį turėsime siųsti kanalu (m).</returns>
 		private List<byte> GetVectorToSend()
@@ -188,20 +143,8 @@ namespace Scenario1
 				Console.Write("Įveskite žodį, kurį norite siųsti kanalu: ");
 				var input = Console.ReadLine();
 
-				if (Regex.IsMatch(input, "^[0,1]{1,}$"))
-				{
-					if (input.Length != _rows)
-
-						_errorMessage = $"Vektoriaus ilgis privalo būti lygus {_rows}.";
-					else
-					{
-						_errorMessage = string.Empty;
-						return StringToIntArrayVector(input);
-					}
-				}
-
-				else
-					_errorMessage = "Leidžiami simboliai yra tik '0' ir '1'.";
+				try                 { return _validator.ValidateVectorToSend(input); }
+				catch (Exception e) { _errorMessage = e.Message; }
 			}
 		}
 
@@ -219,14 +162,9 @@ namespace Scenario1
 				Console.Write($"{question} (y/n): ");
 				var input = Console.ReadLine();
 
-				if (input.ToLower() != "y" && input.ToLower() != "n")
-					_errorMessage = "Įveskite 'y', jeigu norite keisti iš kanalo gautą vektorių, antraip 'n'.";
+				try                 { return _validator.ValidateYesOrNoAnswer(input); }
+				catch (Exception e) { _errorMessage = e.Message; }
 
-				else
-				{
-					_errorMessage = string.Empty;
-					return input.ToLower() == "y";
-				}
 			}
 		}
 
@@ -251,19 +189,16 @@ namespace Scenario1
 					return;
 				}
 
-				if (int.TryParse(input, out var col))
+				try
 				{
-					if (col > _cols || col < 1)
-						_errorMessage = $"Skaičius privalo būti tarp [1;{_cols}]!";
-
-					else
-					{
-						_errorVector[col - 1] = (byte) (_errorVector[col - 1] ^ 1);
-						_distortedVector[col - 1] = (byte) (_distortedVector[col - 1] ^ 1);
-					}
+					var col = _validator.ValidateErrorVectorColumn(input);
+					_errorVector[col - 1] = (byte)(_errorVector[col - 1] ^ 1);
+					_distortedVector[col - 1] = (byte)(_distortedVector[col - 1] ^ 1);
 				}
-				else
-					_errorMessage = "Galimos reikšmės tik sveikieji skaičiai!";
+				catch (Exception e)
+				{
+					_errorMessage = e.Message;
+				}
 			}
 		}
 
@@ -275,7 +210,8 @@ namespace Scenario1
 		private void LetUserEnterGMatrix()
 		{
 			_tempMatrix = new List<List<byte>>(_rows);
-			
+			var row = new List<byte>();
+
 			for (var r = 0; r < _rows; r++)
 			{
 				DisplayCurrentInformation();
@@ -283,25 +219,18 @@ namespace Scenario1
 				Console.Write($"Įveskite {r + 1}-ąjį vektorių: ");
 				var input = Console.ReadLine();
 
-				if (Regex.IsMatch(input, "^[0,1]{1,}$"))
+				try
 				{
-					if (input.Length != _cols)
-					{
-						_errorMessage = $"Vektoriaus ilgis privalo būti lygus {_cols}.";
-					}
-					else
-					{
-						_tempMatrix.Add(StringToIntArrayVector(input));
-						_errorMessage = string.Empty;
-						continue;
-					}
+					row = _validator.ValidateGMatrixRow(input);
+					_tempMatrix.Add(row);
 				}
-				else
+				catch (Exception e)
 				{
-					_errorMessage = "Leidžiami simboliai yra tik '0' ir '1'.";
+					_errorMessage = e.Message;
+					r--;
 				}
-				r--;
 			}
+
 			try
 			{
 				_matrixG = new MatrixG(_cols, _rows, _tempMatrix);
@@ -311,22 +240,6 @@ namespace Scenario1
 				_errorMessage = e.Message;
 				LetUserEnterGMatrix();
 			}
-		}
-
-		/// <summary>
-		/// Konvertuoja 'string' tipo vektorių į 'int[]' tipą.
-		/// </summary>
-		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
-		/// <returns>Konvertuotą vektorių.</returns>
-		private List<byte> StringToIntArrayVector(string vector)
-		{
-			var length = vector.Length;
-			var row = new List<byte>(length);
-			for (var c = 0; c < length; c++)
-			{
-				row.Add((byte)char.GetNumericValue(vector[c]));
-			}
-			return row;
 		}
 
 		/// <summary>
@@ -381,6 +294,8 @@ namespace Scenario1
 
 			if (_errorMessage != string.Empty)
 				ConsoleHelper.WriteError(_errorMessage);
+
+			_errorMessage = string.Empty;
 
 			Console.WriteLine();
 		}

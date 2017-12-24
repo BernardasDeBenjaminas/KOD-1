@@ -46,6 +46,7 @@
     <Compile Include="MatrixG.cs" />
     <Compile Include="MatrixH.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Validator.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
