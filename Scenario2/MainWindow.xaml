@@ -5,19 +5,31 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Scenario2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="481.549" Width="713.155">
 	<Grid>
-		<Label Content="Klaidos tikimybė: " HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-		<TextBox x:Name="ErrorChanceInput" Height="23" Margin="10,35,388.4,0" TextWrapping="Wrap" Text="0.5" VerticalAlignment="Top" TextChanged="ErrorChanceInput_TextChanged"/>
+		<Label Content="Klaidos tikimybė: " HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="26"/>
+		<TextBox x:Name="InputErrorChance" Height="23" Margin="112,13,549.4,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" TextChanged="InputErrorChance_TextChanged"/>
 
-		<Label Content="Kodo ilgis (n):" HorizontalAlignment="Left" Margin="153,10,0,0" VerticalAlignment="Top"/>
-		<TextBox x:Name="ColsInput" HorizontalAlignment="Left" Height="23" Margin="153,35,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" TextChanged="ColsInput_TextChanged"/>
+		<Label x:Name="LabelCols" Content="Kodo ilgis (n):" HorizontalAlignment="Left" Margin="178,13,0,0" VerticalAlignment="Top"/>
+		<TextBox x:Name="InputCols" HorizontalAlignment="Left" Height="23" Margin="264,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="45" TextChanged="InputCols_TextChanged"/>
 
-		<Label Content="Kodo dimensija (k):" HorizontalAlignment="Left" Margin="303,10,0,0" VerticalAlignment="Top"/>
-		<TextBox x:Name="RowsInput" HorizontalAlignment="Left" Height="23" Margin="303,35,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="120" TextChanged="RowsInput_TextChanged"/>
+		<Label x:Name="LabelRows" Content="Kodo dimensija (k):" HorizontalAlignment="Left" Margin="324,13,0,0" VerticalAlignment="Top"/>
+		<TextBox x:Name="InputRows" HorizontalAlignment="Left" Height="23" Margin="439,13,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="45" TextChanged="InputRows_TextChanged"/>
 
-		<Label x:Name="ErrorMessageLabel" Content="" HorizontalAlignment="Left" Margin="10,63,0,0" VerticalAlignment="Top">
+		<CheckBox x:Name="CheckBoxOwnMatrix" Content="Įvesiu savo matricą." HorizontalAlignment="Left" Margin="508,16,0,0" VerticalAlignment="Top" Checked="CheckBoxOwnMatrix_Checked"/>
+
+		<Button x:Name="ButtonSubmitVariables" Content="Pateikti" HorizontalAlignment="Left" Margin="555,44,0,0" VerticalAlignment="Top" Width="75" Height="23" Click="ButtonSubmitVariables_Click"/>
+
+		<Label x:Name="ErrorMessageLabel" Content="" HorizontalAlignment="Left" Margin="87,44,0,0" VerticalAlignment="Top">
 			<Label.Foreground>Crimson</Label.Foreground>
 		</Label>
+		<Label x:Name="LabelEnterMatrixRow" Content="Enter matrix row:" HorizontalAlignment="Left" Margin="12,92,0,0" VerticalAlignment="Top" Visibility="Hidden"/>
+		<TextBox x:Name="InputMatrixRow" HorizontalAlignment="Left" Height="23" Margin="139,94,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120" TextChanged="InputMatrixRow_TextChanged" KeyUp="InputMatrixRow_KeyUp" Visibility="Hidden"/>
+		<Label x:Name="LabelTextToSend" Content="Įveskite tekstą siuntimui:" HorizontalAlignment="Left" Margin="12,150,0,0" VerticalAlignment="Top" Visibility="Hidden"/>
+		<TextBox x:Name="InputTextToSend" HorizontalAlignment="Left" Height="170" Margin="12,180,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="153" KeyUp="InputTextToSend_KeyUp" Visibility="Hidden"/>
+		<TextBlock x:Name="TextBlockSendWithoutCoding" HorizontalAlignment="Left" Margin="196,180,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="170" Width="153" Visibility="Hidden"/>
+		<Label x:Name="LabelSentWithoutCoding" Content="Siųsta be kodavimo:" HorizontalAlignment="Left" Margin="196,150,0,0" VerticalAlignment="Top" Visibility="Hidden"/>
+		<Label x:Name="LabelSentWithCoding" Content="Siųsta su kodavmu:" HorizontalAlignment="Left" Margin="380,150,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.438,0.576" Visibility="Hidden"/>
+		<TextBlock x:Name="TextBlockSendWithCoding" HorizontalAlignment="Left" Margin="380,180,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="170" Width="153" RenderTransformOrigin="0.339,0.189" Visibility="Hidden"/>
 	</Grid>
 </Window>

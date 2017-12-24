@@ -116,7 +116,7 @@ namespace Logic
 				var leaders = GetPotentialLeaders(_cols, weight);
 				foreach (var leaderAsString in leaders)
 				{
-					var leaderAsArray = StringToIntArrayVector(leaderAsString);
+					var leaderAsArray = StringToByteListVector(leaderAsString);
 					var syndromeAsArray = GetSyndrome(leaderAsArray);
 					var syndromeAsString = string.Join("", syndromeAsArray);
 
@@ -188,7 +188,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
 		/// <returns>Konvertuotą vektorių.</returns>
-		private static List<byte> StringToIntArrayVector(string vector)
+		private static List<byte> StringToByteListVector(string vector)
 		{
 			var length = vector.Length;
 			var row = new List<byte>(length);

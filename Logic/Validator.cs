@@ -85,6 +85,9 @@ namespace Logic
 
 		public List<byte> ValidateGMatrixRow(string input)
 		{
+			if (input == null)
+				throw new ArgumentException("Reikšmė negali būti tuščia.");
+
 			if (Regex.IsMatch(input, "^[0,1]{1,}$"))
 			{
 				if (input.Length != _cols)
