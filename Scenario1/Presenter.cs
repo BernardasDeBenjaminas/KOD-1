@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Logic;
 
@@ -14,19 +15,19 @@ namespace Scenario1
 		private int _rows; // '_matrixG' dimensija (k).
 		private int _cols; // '_matrixG' ilgis (n).
 
-		private int[][] _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
+		private List<List<byte>> _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
 		private MatrixG _matrixG; // G matrica (vartotojo įvesta arba kompiuterio sugeneruota).
 		private MatrixH _matrixH; // H matrica (gauta iš '_matrixG').
 
 		private Channel _channel; // Kanalas, kuriuo siųsiu vektorius.
 		private double _errorProbability = -1; // Tikimybė kanale įvykti klaidai (p). -1, nes 0 yra leidžiama reikšmė.
-		private int[] _errorVector; // Klaidos vektorius.
+		private List<byte> _errorVector; // Klaidos vektorius.
 
-		private int[] _originalVector;	// Vartotojo žodis, kurį siųsime kanalu.
-		private int[] _encodedVector;   // '_originalVector'  užkoduotas G matrica.
-		private int[] _distortedVector; // '_encodedVector'   išsiųstas kanalu (galimai iškraipytas).
-		private int[] _decodedVector;   // '_distortedVector' dekoduotas H matrica.
-		private int[] _receivedVector;  // '_decodedVector'   dekoduotas G matrica.
+		private List<byte> _originalVector;	// Vartotojo žodis, kurį siųsime kanalu.
+		private List<byte> _encodedVector;   // '_originalVector'  užkoduotas G matrica.
+		private List<byte> _distortedVector; // '_encodedVector'   išsiųstas kanalu (galimai iškraipytas).
+		private List<byte> _decodedVector;   // '_distortedVector' dekoduotas H matrica.
+		private List<byte> _receivedVector;  // '_decodedVector'   dekoduotas G matrica.
 
 
 		// PUBLIC
@@ -178,7 +179,7 @@ namespace Scenario1
 		/// Per vartotojo sąsają priimta vektorių siuntimui kanalu.
 		/// </summary>
 		/// <returns>Vektorius, kurį turėsime siųsti kanalu (m).</returns>
-		private int[] GetVectorToSend()
+		private List<byte> GetVectorToSend()
 		{
 			while (true)
 			{
@@ -257,8 +258,8 @@ namespace Scenario1
 
 					else
 					{
-						_errorVector[col - 1] = _errorVector[col - 1] ^ 1;
-						_distortedVector[col - 1] = _distortedVector[col - 1] ^ 1;
+						_errorVector[col - 1] = (byte) (_errorVector[col - 1] ^ 1);
+						_distortedVector[col - 1] = (byte) (_distortedVector[col - 1] ^ 1);
 					}
 				}
 				else
@@ -273,7 +274,7 @@ namespace Scenario1
 		/// </summary>
 		private void LetUserEnterGMatrix()
 		{
-			_tempMatrix = new int[_rows][];
+			_tempMatrix = new List<List<byte>>(_rows);
 			
 			for (var r = 0; r < _rows; r++)
 			{
@@ -290,7 +291,7 @@ namespace Scenario1
 					}
 					else
 					{
-						_tempMatrix[r] = StringToIntArrayVector(input);
+						_tempMatrix.Add(StringToIntArrayVector(input));
 						_errorMessage = string.Empty;
 						continue;
 					}
@@ -317,13 +318,13 @@ namespace Scenario1
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
 		/// <returns>Konvertuotą vektorių.</returns>
-		private int[] StringToIntArrayVector(string vector)
+		private List<byte> StringToIntArrayVector(string vector)
 		{
 			var length = vector.Length;
-			var row = new int[length];
+			var row = new List<byte>(length);
 			for (var c = 0; c < length; c++)
 			{
-				row[c] = (int)char.GetNumericValue(vector[c]);
+				row.Add((byte)char.GetNumericValue(vector[c]));
 			}
 			return row;
 		}
@@ -350,7 +351,7 @@ namespace Scenario1
 			{
 				var message = "G = ";
 
-				for (var c = 0; c <= _tempMatrix.GetUpperBound(0); c++)
+				for (var c = 0; c < _tempMatrix.Count; c++)
 					if (_tempMatrix[c] != null)
 						message += string.Join(" ", _tempMatrix[c]) + "\n    ";
 

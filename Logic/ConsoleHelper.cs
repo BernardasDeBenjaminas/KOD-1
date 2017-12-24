@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Logic
 {
@@ -41,7 +42,7 @@ namespace Logic
 
 			var message = $"{matrixName} = ";
 
-			for (var c = 0; c <= innerMatrix.GetUpperBound(0); c++)
+			for (var c = 0; c < innerMatrix.Count; c++)
 				if (innerMatrix[c] != null)
 					message += string.Join(" ", innerMatrix[c]) + "\n    ";
 
@@ -58,7 +59,7 @@ namespace Logic
 
 			var message = $"{matrixName} = ";
 
-			for (var c = 0; c <= innerMatrix.GetUpperBound(0); c++)
+			for (var c = 0; c < innerMatrix.Count; c++)
 				if (innerMatrix[c] != null)
 					message += string.Join(" ", innerMatrix[c]) + "\n    ";
 
@@ -73,12 +74,12 @@ namespace Logic
 		/// <param name="introMessage">Žinutė, kurią norima spausdinti.</param>
 		/// <param name="errorVector">Vektorius, kurio reikšmės lems kokia spalva bus spausdinami 'originalVector' nariai.</param>
 		/// <param name="originalVector">Vektorius, kurio narius norima spausdinti spalvotai.</param>
-		public static void WriteChanges(string introMessage, int[] errorVector, int[] originalVector)
+		public static void WriteChanges(string introMessage, List<byte> errorVector, List<byte> originalVector)
 		{
 			Console.ForegroundColor = ConsoleColor.White;
 			Console.Write(introMessage);
 
-			var length = errorVector.GetUpperBound(0) + 1;
+			var length = errorVector.Count;
 			for (var c = 0; c < length; c++)
 			{
 				Console.ForegroundColor = errorVector[c] == 0 

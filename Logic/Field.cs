@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Logic
 {
@@ -13,16 +14,16 @@ namespace Logic
 		/// <param name="vector1">Pirmasis vektorius sudėčiai.</param>
 		/// <param name="vector2">Antrasis vektorius sudėčiai.</param>
 		/// <returns>Vektorius, kuris yra pateiktų vektorių sumos rezultatas.</returns>
-		public static int[] Add(int[] vector1, int[] vector2)
+		public static List<byte> Add(List<byte> vector1, List<byte> vector2)
 		{
-			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
+			if (vector1.Count != vector2.Count)
 				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");
 
-			var length = vector1.GetUpperBound(0) + 1;
-			var result = new int[length];
+			var length = vector1.Count;
+			var result = new List<byte>(length);
 
 			for (var c = 0; c < length; c++)
-				result[c] = (vector1[c] + vector2[c]) % 2;
+				result.Add((byte)((vector1[c] + vector2[c]) % 2));
 
 			return result;
 		}
@@ -33,19 +34,19 @@ namespace Logic
 		/// <param name="vector1">Pirmasis vektorius daugybai.</param>
 		/// <param name="vector2">Antrasis vektorius daugybai.</param>
 		/// <returns>Skaičius, kuris yra pateiktų vektorių sandaugos rezultatas.</returns>
-		public static int Multiply(int[] vector1, int[] vector2)
+		public static byte Multiply(List<byte> vector1, List<byte> vector2)
 		{
-			if (vector1.GetUpperBound(0) != vector2.GetUpperBound(0))
+			if (vector1.Count != vector2.Count)
 				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");
 
-			var length = vector1.GetUpperBound(0) + 1;
+			var length = vector1.Count;
 			var result = 0;
 
 			for (var c = 0; c < length; c++)
 				result += vector1[c] * vector2[c];
 			result %= 2;
 
-			return result;
+			return (byte) result;
 		}
 	}
 }

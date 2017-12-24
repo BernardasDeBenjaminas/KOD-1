@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Logic
 {
@@ -26,15 +27,15 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norima siųsti kanalu.</param>
 		/// <returns>Potencialiai iškraipytas vektorius (0 tampa 1 ir atvirkščiai).</returns>
-		public int[] SendVectorThrough(int[] vector)
+		public List<byte> SendVectorThrough(List<byte> vector)
 		{
 			var result = Clone(vector);
-			var length = result.GetUpperBound(0) + 1;
+			var length = result.Count;
 
 			for (var c = 0; c < length; c++)
 			{
 				if (RandomGenerator.NextDouble() <= ChanceOfError)
-					result[c] = result[c] ^ 1; // ^ = XOR.
+					result[c] = (byte) (result[c] ^ 1); // ^ = XOR.
 			}
 
 			return result;
@@ -48,19 +49,20 @@ namespace Logic
 		/// <param name="vector1">Pirmasis vektorius palyginimui.</param>
 		/// <param name="vector2">Antrasis vektorius palyginimui.</param>
 		/// <returns>Vektorių sudarytą iš 0 ir 1.</returns>
-		public int[] FindDifferences(int[] vector1, int[] vector2)
+		public List<byte> FindDifferences(List<byte> vector1, List<byte> vector2)
 		{
-			var length = vector1.GetUpperBound(0) + 1;
+			var length = vector1.Count;
 
-			if (length != vector2.GetUpperBound(0) + 1)
+			if (length != vector2.Count)
 				throw new ArgumentException("The vectors have to be the same length!");
 
-			var answer = new int[length];
+			var answer = new List<byte>(length);
 			for (var c = 0; c < length; c++)
 			{
-				answer[c] = vector1[c] != vector2[c]
-					? answer[c] = 1
-					: answer[c] = 0;
+				if (vector1[c] != vector2[c])
+					answer.Add(1);
+				else
+					answer.Add(0);
 			}
 			return answer;
 		}
@@ -70,13 +72,13 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurio reikšmes norima nukopijuoti.</param>
 		/// <returns>Vektorius su identiškomis reikšmėmis.</returns>
-		private int[] Clone(int[] vector)
+		private List<byte> Clone(List<byte> vector)
 		{
-			var length = vector.GetUpperBound(0) + 1;
-			var newVector = new int[length];
+			var length = vector.Count;
+			var newVector = new List<byte>(length);
 
 			for (var c = 0; c < length; c++)
-				newVector[c] = vector[c];
+				newVector.Add(vector[c]);
 
 			return newVector;
 		}

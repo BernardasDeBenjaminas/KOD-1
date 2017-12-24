@@ -6,7 +6,7 @@ namespace Logic
 {
 	public class MatrixG
 	{
-		public readonly int[][] Matrix; // Pagrindinė matrica.
+		public readonly List<List<byte>> Matrix; // Pagrindinė matrica.
 		private readonly int _rows;	    // 'Matrix' dimensija (k).
 		private readonly int _cols;     // 'Matrix' ilgis (n).
 
@@ -16,7 +16,7 @@ namespace Logic
 		/// <param name="length">Matricos ilgis.</param>
 		/// <param name="dimension">Matricos dimensija.</param>
 		/// <param name="matrix">Vartotojo norima matrica naudojimui (jeigu nebus pateikta - kodas pats sugeneruos ją).</param>
-		public MatrixG(int length, int dimension, int[][] matrix = null)
+		public MatrixG(int length, int dimension, List<List<byte>> matrix = null)
 		{
 			if (length < 2)
 				throw new ArgumentException("\nMatricos ilgis privalo būti 2 arba daugiau.");
@@ -46,35 +46,43 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį reikia užkoduoti.</param>
 		/// <returns>Generuojančia matrica užkoduotas vektorius.</returns>
-		public int[] Encode(int[] vector)
+		public List<byte> Encode(List<byte> vector)
 		{
-			if (vector.GetUpperBound(0) + 1 != _rows)
+			if (vector.Count != _rows)
 				throw new ArgumentException("\nVektoriaus ilgis privalo sutapti su matricos dimensija.");
 
-			var result = new int[_cols];
+			var result = new List<byte>(_cols);
 			for (var c = 0; c < _cols; c++)
 			{
 				var matrixCol = GetColumnAsVector(Matrix, c);
-				result[c] = Field.Multiply(matrixCol, vector);
+				result.Add(Field.Multiply(matrixCol, vector));
 			}
 			return result;
 		}
+
+		//public byte[] Encode(byte[] vector)
+		//{
+		//	if (vector.GetUpperBound(0) != _rows)
+		//		throw new ArgumentException("Vektoriaus ilgis privalo sutapti su matricos dimensija.");
+
+			
+		//}
 
 		/// <summary>
 		/// Dekoduoja vektorių.
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį reikia dekoduoti.</param>
 		/// <returns>Generuojančia matrica dekoduotas vektorius.</returns>
-		public int[] Decode(int[] vector)
+		public List<byte> Decode(List<byte> vector)
 		{
-			if (vector.GetUpperBound(0) + 1 != _cols)
+			if (vector.Count != _cols)
 				throw new ArgumentException("\nPateikto vektoriaus ilgis privalo sutapti su matricos ilgiu.");
 
-			var decoded = new int[_rows];
+			var decoded = new List<byte>(_rows);
 
 			// Kokia esamos matricos dimensija, tiek ir paimame bitų.
 			for (var c = 0; c < _rows; c++)
-				decoded[c] = vector[c];
+				decoded.Add(vector[c]);
 
 			return decoded;
 		}
@@ -100,10 +108,10 @@ namespace Logic
 		/// </summary>
 		/// <param name="matrix">Matrica, kurią reikia patikrinti.</param>
 		/// <returns>Grąžina 'true' jeigu standarinė matrica yra pačioje pradžioje arba pačioje pabaigoje - antraip 'false'.</returns>
-		private bool IsTransformableToMatrixH(int[][] matrix)
+		private bool IsTransformableToMatrixH(List<List<byte>> matrix)
 		{
-			var numberOfCols = matrix[0].GetUpperBound(0) + 1;
-			var numberOfRows = matrix.GetUpperBound(0) + 1;
+			var numberOfCols = matrix[0].Count;
+			var numberOfRows = matrix.Count;
 			var result = false;
 			// Seksime kurioje stulpelio vietoje yra vienetas.
 			var position = 0;
@@ -134,10 +142,10 @@ namespace Logic
 		/// </summary>
 		/// <param name="matrix">Matrica, kurią reikia patikrinti.</param>
 		/// <returns>Grąžina 'true' jeigu matrica tinkanti - antraip 'false'.</returns>
-		private bool CheckIfProperMatrixGiven(int[][] matrix)
+		private bool CheckIfProperMatrixGiven(List<List<byte>> matrix)
 		{
-			var length = matrix[0].GetUpperBound(0) + 1;
-			var dimension = matrix.GetUpperBound(0) + 1;
+			var length = matrix[0].Count;
+			var dimension = matrix.Count;
 
 			if (length != _cols)
 				throw new ArgumentException("\nPaduotos matricos ilgis nesutampa su paduotu matricos ilgio argumentu konstruktoriui.");
@@ -149,7 +157,7 @@ namespace Logic
 			{
 				try
 				{
-					var test = matrix[r];
+					var test = matrix[r].Count;
 				}
 				catch (Exception)
 				{
@@ -170,7 +178,7 @@ namespace Logic
 		/// <param name="length">Matricos ilgis.</param>
 		/// <param name="dimension">Matricos dimensija</param>
 		/// <returns>Sugeneruotą matricą.</returns>
-		private int[][] GenerateMatrix(int length, int dimension)
+		private List<List<byte>> GenerateMatrix(int length, int dimension)
 		{
 			var standardMatrix = GenerateStandardMatrix(dimension);
 			var randomMatrix = GenerateRandomMatrix(rows: dimension, cols: length - dimension);
@@ -183,34 +191,31 @@ namespace Logic
 		/// <param name="matrix1">Pirmoji matrica sujungimui.</param>
 		/// <param name="matrix2">Antroji matrica sujungimui.</param>
 		/// <returns>Matrica, gauta sujungus pateiktas matricas.</returns>
-		private int[][] CombineMatrices(int[][] matrix1, int[][] matrix2)
+		private List<List<byte>> CombineMatrices(List<List<byte>> matrix1, List<List<byte>> matrix2)
 		{
-			if (matrix1.GetUpperBound(0) != matrix2.GetUpperBound(0))
+			if (matrix1.Count != matrix2.Count)
 				throw new ArgumentException("\nMatricos dimensijos turi sutapti.");
 
-			var numberOfRows = matrix1.GetUpperBound(0) + 1;
-			var numberOfCols = matrix1[0].GetUpperBound(0) + 1 + matrix2[0].GetUpperBound(0) + 1;
-			var matrix = new int[numberOfRows][];
+			var numberOfRows = matrix1.Count;
+			var numberOfCols = matrix1[0].Count + matrix2[0].Count;
+			var matrix = new List<List<byte>>(numberOfRows);
 
 			for (var r = 0; r < numberOfRows; r++)
 			{
-				var row = new int[numberOfCols];
-				var colIndex = 0;
+				var row = new List<byte>(numberOfCols);
 
 				// Kopijuojame reikšmes iš pirmos matricos.
-				for (var c1 = 0; c1 <= matrix1[0].GetUpperBound(0); c1++)
+				for (var c1 = 0; c1 < matrix1[0].Count; c1++)
 				{
-					row[colIndex] = matrix1[r][c1];
-					colIndex++;
+					row.Add(matrix1[r][c1]);
 				}
 				// Kopijuojame reikšmes iš antros matricos.
-				for (var c2 = 0; c2 <= matrix2[0].GetUpperBound(0); c2++)
+				for (var c2 = 0; c2 < matrix2[0].Count; c2++)
 				{
-					row[colIndex] = matrix2[r][c2];
-					colIndex++;
+					row.Add(matrix2[r][c2]);
 				}
 				
-				matrix[r] = row;
+				matrix.Add(row);
 			}
 
 			return matrix;
@@ -222,19 +227,19 @@ namespace Logic
 		/// <param name="rows">Matricos eilučių skaičius.</param>
 		/// <param name="cols">Matricos stulpelių skaičius.</param>
 		/// <returns>Sugeneruota matrica.</returns>
-		private int[][] GenerateRandomMatrix(int rows, int cols)
+		private List<List<byte>> GenerateRandomMatrix(int rows, int cols)
 		{
 			var randomGenerator = new Random(DateTime.Now.Millisecond);
-			var matrix = new int[rows][];
+			var matrix = new List<List<byte>>(rows);
 
 			for (var r = 0; r < rows; r++)
 			{
-				var vector = new int[cols];
+				var vector = new List<byte>(cols);
 
 				for (var c = 0; c < cols; c++)
-					vector[c] = randomGenerator.Next(0, 2);
+					vector.Add((byte)randomGenerator.Next(0, 2));
 
-				matrix[r] = vector;
+				matrix.Add(vector);
 			}
 
 			return matrix;
@@ -245,15 +250,23 @@ namespace Logic
 		/// </summary>
 		/// <param name="size">Matricos eilučių/stulpelių skaičius.</param>
 		/// <returns>Sugeneruotą standartinę matricą.</returns>
-		private int[][] GenerateStandardMatrix(int size)
+		private List<List<byte>> GenerateStandardMatrix(int size)
 		{
-			var matrix = new int[size][];
+			var matrix = new List<List<byte>>(size);
 
 			for (var r = 0; r < size; r++)
 			{
-				var row = new int[size];
-				row[r] = 1;
-				matrix[r] = row;
+				var row = new List<byte>(size);
+
+				for (var c = 0; c < r; c++)
+					row.Add(0);
+
+				row.Add(1);
+
+				for (var cc = r + 1; cc < size; cc++)
+					row.Add(0);
+
+				matrix.Add(row);
 			}
 
 			return matrix;
@@ -265,7 +278,7 @@ namespace Logic
 		/// <param name="vector">Vektorius, kurį reikia patikrinti.</param>
 		/// <param name="position">Pozicija, kurioje turėtų būti '1'.</param>
 		/// <returns>Grąžina 'true' jeigu tik nurodytoje pozicijoje yra '1' - antraip 'false'.</returns>
-		private bool VectorContainsOnlyOne(int[] vector, int position)
+		private bool VectorContainsOnlyOne(List<byte> vector, int position)
 		{
 			// Patikrina ar yra tik vienas '1'.
 			if (vector.Count(n => n == 1) != 1)
@@ -281,13 +294,13 @@ namespace Logic
 		/// <param name="matrix">Matrica iš kurios reikės išimti stulpelį.</param>
 		/// <param name="columnNumber">Numeris norimo stulpelio (jeigu reikia pirmojo, paduodate 0).</param>
 		/// <returns>Nurodytą stulpelį kaip vektorių.</returns>
-		private int[] GetColumnAsVector(int[][] matrix, int columnNumber)
+		private List<byte> GetColumnAsVector(List<List<byte>> matrix, int columnNumber)
 		{
-			var numberOfRows = matrix.GetUpperBound(0) + 1;
-			var column = new int[numberOfRows];
+			var numberOfRows = matrix.Count;
+			var column = new List<byte>(numberOfRows);
 
 			for (var r = 0; r < numberOfRows; r++)
-				column[r] = matrix[r][columnNumber];
+				column.Add(matrix[r][columnNumber]);;
 
 			return column;
 		}
@@ -296,9 +309,9 @@ namespace Logic
 		/// Atskiria standartinę matricą nuo 'kitos' ir grąžina ją (tą 'kitą').
 		/// </summary>
 		/// <returns>Ne standartinę matricos dalį.</returns>
-		private int[][] SeparateOtherMatrix()
+		private List<List<byte>> SeparateOtherMatrix()
 		{
-			var matrix = new int[_rows][];
+			var matrix = new List<List<byte>>(_rows);
 
 			// Kadangi standartinės matricos k = n, tai mes žinome, jog standartinė matrica pasibaigia k stulpelyje.
 			var numberOfColumns = _cols - _rows;
@@ -306,13 +319,13 @@ namespace Logic
 
 			for (var r = 0; r < _rows; r++)
 			{
-				var row = new int[numberOfColumns];
+				var row = new List<byte>(numberOfColumns);
 				for (var c = _rows; c < _cols; c++)
 				{
-					row[index] = Matrix[r][c];
+					row.Add(Matrix[r][c]);
 					index++;
 				}
-				matrix[r] = row;
+				matrix.Add(row);
 				index = 0;
 			}
 
@@ -325,20 +338,20 @@ namespace Logic
 		/// </summary>
 		/// <param name="matrix">Matricą, kurią reikia transponuoti.</param>
 		/// <returns>Transponuota matrica.</returns>
-		private int[][] TwistMatrix(int[][] matrix)
+		private List<List<byte>> TwistMatrix(List<List<byte>> matrix)
 		{
-			var rows = matrix.GetUpperBound(0) + 1;
-			var cols = matrix[0].GetUpperBound(0) + 1;
-			var twisted = new int[cols][];
+			var rows = matrix.Count;
+			var cols = matrix[0].Count;
+			var twisted = new List<List<byte>>(cols);
 
 			for (var c = 0; c < cols; c++)
 			{
-				var twistedCol = new int[rows];
+				var twistedCol = new List<byte>(rows);
 
 				for (var r = 0; r < rows; r++)
-					twistedCol[r] = matrix[r][c];
+					twistedCol.Add(matrix[r][c]);
 
-				twisted[c] = twistedCol;
+				twisted.Add(twistedCol);
 			}
 			return twisted;
 		}

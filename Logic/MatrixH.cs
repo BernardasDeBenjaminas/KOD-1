@@ -10,7 +10,7 @@ namespace Logic
 		//		Raktas  - klasės lyderio sindromas;
 		//		Reikšmė - klasės lyderio svoris.
 		private readonly Dictionary<string, int> _translations = new Dictionary<string, int>();
-		public readonly int[][] Matrix; // Pagrindinė matrica.
+		public readonly List<List<byte>> Matrix; // Pagrindinė matrica.
 		private readonly int _rows; // 'Matrix' dimensija (k).
 		private readonly int _cols; // 'Matrix' ilgis (n).
 
@@ -18,13 +18,13 @@ namespace Logic
 		/// Apiformina pateiktą kontrolinę matricą tipo 'MatrixH' objektu.
 		/// </summary>
 		/// <param name="matrix">Kontrolinė matrica, kuris bus apiforminta.</param>
-		public MatrixH(int[][] matrix)
+		public MatrixH(List<List<byte>> matrix)
 		{
 			if (CheckIfProperMatrixGiven(matrix))
 			{
 				Matrix = matrix;
-				_rows = matrix.GetUpperBound(0) + 1;
-				_cols = matrix[0].GetUpperBound(0) + 1;
+				_rows = matrix.Count;
+				_cols = matrix[0].Count;
 
 				FillTranslationsTable();
 			}
@@ -38,7 +38,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norima dekoduoti.</param>
 		/// <returns>Dekoduotas vektorius.</returns>
-		public int[] Decode(int[] vector)
+		public List<byte> Decode(List<byte> vector)
 		{
 			var result = Clone(vector); 
 
@@ -46,9 +46,12 @@ namespace Logic
 			{
 				// 1. 'tuple' vektorius sudarytas iš nulių išskyrus vieną poziciją 
 				//	  (mūsų atveju pažymėtą 'c' kintamuoju, kuri turės vienetą).
-				var tuple = new int[_cols];
-				tuple[c] = 1;
-
+				var tuple = new List<byte>(_cols);
+				for (var i = 0; i < c; i++)
+					tuple.Add(0);
+				tuple.Add(1);
+				for (var i = c + 1; i < _cols; i++)
+					tuple.Add(0);
 				// 2. Apskaičiuojame 'vector'-iaus sindromą.
 				//    Iš '_translations' kintamojo ištraukiame atitinkamo klasės lyderio svorį.
 				var syndrome = string.Join("", GetSyndrome(result));
@@ -83,16 +86,16 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurio sindromą norima apskaičiuoti.</param>
 		/// <returns>Sindromas.</returns>
-		private int[] GetSyndrome(int[] vector)
+		private List<byte> GetSyndrome(List<byte> vector)
 		{
-			if (vector.GetUpperBound(0) + 1 != _cols)
+			if (vector.Count != _cols)
 				throw new ArgumentException("\nPaduoto vektoriaus ilgis privalo sutapti su matricos ilgiu.");
 
-			var syndrome = new int[_rows];
+			var syndrome = new List<byte>(_rows);
 			for (var r = 0; r < _rows; r++)
 			{
 				var row1 = Matrix[r];
-				syndrome[r] = Field.Multiply(row1, vector);
+				syndrome.Add(Field.Multiply(row1, vector));
 			}
 			return syndrome;
 		}
@@ -181,17 +184,17 @@ namespace Logic
 		}
 
 		/// <summary>
-		/// Konvertuoja 'string' tipo vektorių į 'int[]' tipą.
+		/// Konvertuoja 'string' tipo vektorių į 'byte[]' tipą.
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norime konvertuoti.</param>
 		/// <returns>Konvertuotą vektorių.</returns>
-		private static int[] StringToIntArrayVector(string vector)
+		private static List<byte> StringToIntArrayVector(string vector)
 		{
 			var length = vector.Length;
-			var row = new int[length];
+			var row = new List<byte>(length);
 			for (var c = 0; c < length; c++)
 			{
-				row[c] = (int) char.GetNumericValue(vector[c]);
+				row.Add((byte)char.GetNumericValue(vector[c]));
 			}
 			return row;
 		}
@@ -201,7 +204,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kuriame reikia skaičiuoti vienetus.</param>
 		/// <returns>Vektoriaus svoris.</returns>
-		private static int GetWeight(int[] vector)
+		private static int GetWeight(List<byte> vector)
 		{
 			return vector.Count(n => n == 1);
 		}
@@ -211,13 +214,13 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurio reikšmes reikia nukopijuoti į atskirą vektorių.</param>
 		/// <returns>Vektorius su identiškomis reikšmėmis pateiktam vektoriui.</returns>
-		public int[] Clone(int[] vector)
+		public List<byte> Clone(List<byte> vector)
 		{
-			var length = vector.GetUpperBound(0) + 1;
-			var newVector = new int[length];
+			var length = vector.Count;
+			var newVector = new List<byte>(length);
 
 			for (var c = 0; c < length; c++)
-				newVector[c] = vector[c];
+				newVector.Add(vector[c]);
 
 			return newVector;
 		}
@@ -227,16 +230,16 @@ namespace Logic
 		/// </summary>
 		/// <param name="matrix">Matrica patikrinimui.</param>
 		/// <returns>Grąžina 'true' jeigu matrica tinkama - antraip 'false'.</returns>
-		private bool CheckIfProperMatrixGiven(int[][] matrix)
+		private bool CheckIfProperMatrixGiven(List<List<byte>> matrix)
 		{
 			if (matrix == null)
 				throw new ArgumentNullException(nameof(matrix), "\nPaduota matrica yra neinicializuota (null).");
 
-			for (var r = 0; r < matrix.GetUpperBound(0) + 1; r++)
+			for (var r = 0; r < matrix.Count; r++)
 			{
 				try
 				{
-					var test = matrix[r];
+					var test = matrix[r].Count;
 				}
 				catch (Exception)
 				{
