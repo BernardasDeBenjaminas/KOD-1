@@ -252,7 +252,7 @@ namespace Scenario2
 			// Parodome patarimus.
 			LabelAdvice1.Visibility = Visibility.Visible;
 			LabelAdvice2.Visibility = Visibility.Visible;
-
+			LabelAdvice3.Visibility = Visibility.Visible;
 		}
 
 		#endregion
@@ -486,7 +486,7 @@ namespace Scenario2
 				decodedTextAsList.Add(decimalNumber);
 			}
 
-			return Encoding.ASCII.GetString(decodedTextAsList.ToArray());
+			return Encoding.UTF8.GetString(decodedTextAsList.ToArray());
 		}
 
 		/// <summary>
@@ -497,7 +497,7 @@ namespace Scenario2
 		private string ConvertTextToBinary(string text)
 		{
 			// 'textAsBytes' reikšmės bus maždaug 89, 112, 201, 5, ...
-			var textAsBytes = Encoding.ASCII.GetBytes(text);
+			var textAsBytes = Encoding.UTF8.GetBytes(text);
 			var stringBuilder = new StringBuilder();
 
 			// Paverčiame į simbolių eilutę iš nulių ir vienetų.

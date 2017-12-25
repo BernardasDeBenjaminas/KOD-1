@@ -7,13 +7,13 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="481.549" Width="713.155">
 	<Grid>
-		<Label Content="Klaidos tikimybė: " HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="26"/>
-		<TextBox x:Name="InputErrorChance" Height="23" Margin="112,13,549.4,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" TextChanged="InputErrorChance_TextChanged"/>
+		<Label Content="Klaidos tikimybė (p): " HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="26"/>
+		<TextBox x:Name="InputErrorChance" Height="23" Margin="128,13,533.4,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" TextChanged="InputErrorChance_TextChanged"/>
 
-		<Label x:Name="LabelCols" Content="Kodo ilgis (n):" HorizontalAlignment="Left" Margin="178,13,0,0" VerticalAlignment="Top"/>
-		<TextBox x:Name="InputCols" HorizontalAlignment="Left" Height="23" Margin="264,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="45" TextChanged="InputCols_TextChanged"/>
+		<Label x:Name="LabelCols" Content="Kodo ilgis (n):" HorizontalAlignment="Left" Margin="183,10,0,0" VerticalAlignment="Top"/>
+		<TextBox x:Name="InputCols" HorizontalAlignment="Left" Height="23" Margin="270,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="45" TextChanged="InputCols_TextChanged"/>
 
-		<Label x:Name="LabelRows" Content="Kodo dimensija (k):" HorizontalAlignment="Left" Margin="324,13,0,0" VerticalAlignment="Top"/>
+		<Label x:Name="LabelRows" Content="Kodo dimensija (k):" HorizontalAlignment="Left" Margin="324,10,0,0" VerticalAlignment="Top"/>
 		<TextBox x:Name="InputRows" HorizontalAlignment="Left" Height="23" Margin="439,13,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="45" TextChanged="InputRows_TextChanged"/>
 
 		<CheckBox x:Name="CheckBoxOwnMatrix" Content="Įvesiu savo matricą." HorizontalAlignment="Left" Margin="508,16,0,0" VerticalAlignment="Top" Checked="CheckBoxOwnMatrix_Checked"/>
@@ -35,9 +35,12 @@
 		<TextBox x:Name="TextBoxSendWithoutCoding" HorizontalAlignment="Left" Margin="196,180,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="170" Width="153" Visibility="Hidden"/>
 
 		<Label x:Name="LabelSendWithCoding" Content="Siųsta su kodavmu:" HorizontalAlignment="Left" Margin="380,150,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.438,0.576" Visibility="Hidden"/>
+
 		<TextBox x:Name="TextBoxSendWithCoding" HorizontalAlignment="Left" Margin="380,180,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="170" Width="153" RenderTransformOrigin="0.339,0.189" Visibility="Hidden"/>
-		<Label x:Name="LabelAdvice1" Content="- Klaidos tikimybė gali būti pakeista bet kada." HorizontalAlignment="Left" Margin="12,61,0,0" VerticalAlignment="Top" FontWeight="Bold" Visibility="Hidden"/>
-		<Label x:Name="LabelAdvice2" Content="- Statistika bus aktuali, jeigu siųsite tą patį tekstą keletą kartų (antraip skaičiuos iš naujo)." HorizontalAlignment="Left" Margin="12,83,0,0" VerticalAlignment="Top" FontWeight="Bold" Visibility="Hidden"/>
+		<Label x:Name="LabelAdvice1" Content="- Klaidos tikimybė gali būti pakeista bet kada." HorizontalAlignment="Left" Margin="12,65,0,0" VerticalAlignment="Top" FontWeight="Bold" Visibility="Hidden"/>
+		<Label x:Name="LabelAdvice2" Content="- Statistika bus aktuali, jeigu siųsite tą patį tekstą keletą kartų (antraip skaičiuos iš naujo)." HorizontalAlignment="Left" Margin="12,85,0,0" VerticalAlignment="Top" FontWeight="Bold" Visibility="Hidden"/>
+		<Label x:Name="LabelAdvice3" Content="- Aiškiems rezultatams bandykite:        p = 0.1        n = 8          k = 2" HorizontalAlignment="Left" Margin="12,105,0,0" VerticalAlignment="Top" FontWeight="Bold" Visibility="Hidden"/>
+
 		<Button x:Name="ButtonSendText" Content="Siųsti kanalu" HorizontalAlignment="Left" Margin="78,401,0,0" VerticalAlignment="Top" Width="87" Click="ButtonSendText_Click" Visibility="Hidden"/>
 		<Label x:Name="LabelSymbolCount" Content="Simbolių skaičius:" HorizontalAlignment="Left" Margin="10,350,0,0" VerticalAlignment="Top" Visibility="Hidden"/>
 		<Label x:Name="LabelMismatchCountPlain" Content="Nesutapimų skaičius:" HorizontalAlignment="Left" Margin="196,350,0,0" VerticalAlignment="Top" Visibility="Hidden"/>
