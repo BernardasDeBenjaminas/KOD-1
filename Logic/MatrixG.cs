@@ -7,8 +7,8 @@ namespace Logic
 	public class MatrixG
 	{
 		public readonly List<List<byte>> Matrix; // Pagrindinė matrica.
-		private readonly int _rows;	    // 'Matrix' dimensija (k).
-		private readonly int _cols;     // 'Matrix' ilgis (n).
+		private readonly int _rows;	// 'Matrix' dimensija (k).
+		private readonly int _cols; // 'Matrix' ilgis (n).
 
 		/// <summary>
 		/// Grąžina generuojančią matricą (viduje jau yra standartinė matrica).
@@ -41,7 +41,6 @@ namespace Logic
 
 
 		// PUBLIC 
-		// Todo: ar verta padaryti, kad kaip argumentą priimtų string'ą?
 		/// <summary>
 		/// Užkoduoja vektorių pasinaudodamas generuojančia matrica.
 		/// </summary>

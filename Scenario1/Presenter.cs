@@ -10,15 +10,14 @@ namespace Scenario1
 	/// </summary>
 	public class Presenter
 	{
-		private string _errorMessage = string.Empty; // Naudojamas klaidos žinutėms atvaizduoti.
-		private Validator _validator = new Validator(); // Todo: add a description.
+		private string _errorMessage = string.Empty;    // Naudojamas klaidos žinutėms atvaizduoti.
+		private Validator _validator = new Validator(); // Naudojamas vartotojo įvesties validavimui.
 
 		private int _rows; // '_matrixG' dimensija (k).
 		private int _cols; // '_matrixG' ilgis (n).
-
-		private List<List<byte>> _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
 		private MatrixG _matrixG; // G matrica (vartotojo įvesta arba kompiuterio sugeneruota).
 		private MatrixH _matrixH; // H matrica (gauta iš '_matrixG').
+		private List<List<byte>> _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
 
 		private Channel _channel; // Kanalas, kuriuo siųsiu vektorius.
 		private double _errorProbability = -1; // Tikimybė kanale įvykti klaidai (p). -1, nes 0 yra leidžiama reikšmė.
