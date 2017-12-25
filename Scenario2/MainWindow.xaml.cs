@@ -454,7 +454,7 @@ namespace Scenario2
 		}
 
 		/// <summary>
-		/// Konvertuoja dvejetainį vektorių atgal į tekstą pagal ASCII koduotę.
+		/// Konvertuoja dvejetainį vektorių atgal į tekstą pagal UTF-8 koduotę.
 		/// </summary>
 		/// <param name="vector">Dvejetainis vektorius.</param>
 		/// <returns>Tekstą.</returns>
@@ -490,7 +490,7 @@ namespace Scenario2
 		}
 
 		/// <summary>
-		/// Paduotą tekstą konvertuoja į tekstą sudarytą iš dvejetainių skaičių pagal ASCII kodavimą.
+		/// Paduotą tekstą konvertuoja į tekstą sudarytą iš dvejetainių skaičių pagal UTF-8 kodavimą.
 		/// </summary>
 		/// <param name="text">Tekstas, kurį norima konvertuoti.</param>
 		/// <returns>Tekstą, sudarytą iš 0 ir 1.</returns>
