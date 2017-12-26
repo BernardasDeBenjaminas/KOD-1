@@ -50,6 +50,24 @@ namespace Logic
 		}
 
 		/// <summary>
+		/// Paverčia dvejetainę simbolių eilutę į dvejetainį tekstą.
+		/// </summary>
+		/// <param name="binaryVector">Vektorius iš 0 ir 1.</param>
+		/// <returns>Simbolių eilutę, sudarytą iš 0 ir 1.</returns>
+		public static string BinaryVectorToBinaryString(IList<byte> binaryVector)
+		{
+			var result = string.Empty;
+			foreach (var bit in binaryVector)
+			{
+				if (bit == 0)
+					result += '0';
+				else
+					result += '1';
+			}
+			return result;
+		}
+
+		/// <summary>
 		/// Paverčia sąrašą iš 0 ir 1 į sąrašą iš dešimtainių skaičių.
 		/// </summary>
 		/// <param name="binaryVector">Sąrašas sudarytas iš 0 ir 1.</param>

@@ -317,7 +317,7 @@ namespace Scenario2
 		private string SendPlainText(string text)
 		{
 			var binaryText = ConvertTextToBinary(text);
-			var textAsVector = ConvertStringToByteList(binaryText);
+			var textAsVector = Converter.BinaryStringToBinaryVector(binaryText);
 			var deformed = _channel.SendVectorThrough(textAsVector);
 			return ConvertBinaryVectorToText(deformed);
 		}
@@ -381,7 +381,7 @@ namespace Scenario2
 				}
 
 				// 3. Užkoduojame generuojančia matrica.
-				var toEncodeAsList = ConvertStringToByteList(toEncodeAsString);
+				var toEncodeAsList = Converter.BinaryStringToBinaryVector(toEncodeAsString);
 				var encoded = _matrixG.Encode(toEncodeAsList);
 
 				// 4. Siunčiame kanalu.
@@ -478,12 +478,12 @@ namespace Scenario2
 		/// <returns>Tekstą.</returns>
 		private string ConvertBinaryVectorToText(IList<byte> vector)
 		{
-			var textInBinary = ConvertByteListToString(vector);
+			var textInBinary = Converter.BinaryVectorToBinaryString(vector);
 			var decodedTextAsList = new List<byte>();
 
 			for (var i = 0; i < textInBinary.Length;)
 			{
-				// Susiskaidome į vektorių su 8 bitais.
+				// Susiskaidome į vektorius po 8 bitus.
 				var byteAsBinaryString = string.Empty;
 				for (var c = 0; c < 8; c++)
 				{
@@ -528,39 +528,6 @@ namespace Scenario2
 			}
 
 			return stringBuilder.ToString();
-		}
-
-		/// <summary>
-		/// Simbolių eilutę iš 0 ir 1 paverčia į vektorių.
-		/// </summary>
-		/// <param name="vector">Simbolių eilutė, kurią norima paversti į vektorių.</param>
-		/// <returns>Vektorių, sudarytą iš 0 ir 1.</returns>
-		private static List<byte> ConvertStringToByteList(string vector)
-		{
-			var list = new List<byte>();
-
-			foreach (var bit in vector)
-				list.Add(bit == '0' ? (byte)0 : (byte)1);
-
-			return list;
-		}
-
-		/// <summary>
-		/// Vektorių iš 0 ir 1 paverčia į simbolių eilutę.
-		/// </summary>
-		/// <param name="vector">Vektorius, kurį norima paversti į simbolių eilutę.</param>
-		/// <returns>Simbolių eilutę, sudarytą iš 0 ir 1.</returns>
-		private static string ConvertByteListToString(IList<byte> vector)
-		{
-			var result = string.Empty;
-			foreach (var bit in vector)
-			{
-				if (bit == 0)
-					result += '0';
-				else
-					result += '1';
-			}
-			return result;
 		}
 
 		#endregion
