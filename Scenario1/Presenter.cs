@@ -121,7 +121,7 @@ namespace Scenario1
 			{
 				DisplayCurrentInformation();
 
-				Console.Write("Įveskite dimensiją (k): ");
+				Console.Write("Įveskite kodo dimensiją (k): ");
 				var input = Console.ReadLine();
 
 				try                 { return _validator.ValidateNumberOfRows(input); }
@@ -252,10 +252,10 @@ namespace Scenario1
 				ConsoleHelper.WriteInformation($"Klaidos tikimybė (p): {_errorProbability}");
 
 			if (_cols != 0)
-				ConsoleHelper.WriteInformation($"Ilgis (n): {_cols}");
+				ConsoleHelper.WriteInformation($"Kodo ilgis \t (n): {_cols}");
 
 			if (_rows != 0)
-				ConsoleHelper.WriteInformation($"Dimensija (k): {_rows}");
+				ConsoleHelper.WriteInformation($"Kodo dimensija \t (k): {_rows}");
 
 			Console.WriteLine();
 

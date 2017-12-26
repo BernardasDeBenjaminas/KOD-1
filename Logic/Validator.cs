@@ -107,7 +107,7 @@ namespace Logic
 		public bool ValidateYesOrNoAnswer(string input)
 		{
 			if (input.ToLower() != "y" && input.ToLower() != "n")
-				throw new ArgumentException("Įveskite 'y', jeigu norite keisti iš kanalo gautą vektorių, antraip 'n'.");
+				throw new ArgumentException("Įveskite 'y', jeigu norite, antraip 'n'.");
 
 			return input.ToLower() == "y";
 		}
