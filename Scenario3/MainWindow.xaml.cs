@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Logic;
-using Image = System.Windows.Controls.Image;
+using Microsoft.Win32;
 
 namespace Scenario3
 {
@@ -17,216 +18,429 @@ namespace Scenario3
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		private int _rows;
-		private int _cols;
-		private MatrixG _matrixG;
-		private MatrixH _matrixH;
-		private Channel _channel;
+		private int _rows = -1; // '_matrixG' dimensija (k).
+		private int _cols = -1; // '_matrixG' ilgis (n).
+		private MatrixG _matrixG; // G matrica (vartotojo įvesta arba kompiuterio sugeneruota).
+		private MatrixH _matrixH; // H matrica (gauta iš '_matrixG').
 
-		public MainWindow()
+		private bool _entersOwnMatrix;        // Ar vartotojas pats įves generuojančią matricą?
+		private List<List<byte>> _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
+
+		private string _pathToSaveEncodedImage;	// Kelias iki paveikslėlio, gauto siunčiant koduotą paveikslėlį kanalu.
+		private string _pathToSavePlainImage;	// Kelias iki paveikslėlio, gauto siunčiant nekoduotą paveikslėlį kanalu.
+		private string _pathToOpenImage;		// Kelias iki paveikslėlio, kurį siųsime kanalu.
+		private Channel _channel;				// Kanalas, kuriuo siųsiu vektorius.
+		private double _errorChance = -1;		// Tikimybė kanale įvykti klaidai (p). -1, nes 0 yra leidžiama reikšmė.
+
+		private string _errorMessage = string.Empty;			 // Naudojamas klaidos žinutėms atvaizduoti.
+		private readonly Validator _validator = new Validator(); // Naudojamas vartotojo įvesties validavimui.
+
+		private bool _areImageFieldsShow; // Naudojamas parodyti visas tris nuotraukas.
+
+
+		#region Kintamųjų surinkimui iš vartotojo.
+
+		/// <summary>
+		/// Funkcija iškviečiama, kuomet vartotojas įveda bet kokį simbolį į klaidos tikimybės langelį.
+		/// </summary>
+		private void InputErrorChance_TextChanged(object sender, TextChangedEventArgs e)
 		{
-			InitializeComponent();
+			var input = ((TextBox)sender).Text;
 
-			#region Creation of matrices and channel.
-
-			_channel = new Channel(0.05);
-
-			_rows = 2;
-			_cols = 10;
-
-			var matrix = new List<List<byte>>(2)
+			try
 			{
-				new List<byte> {1, 0, 1, 1, 0},
-				new List<byte> {0, 1, 0, 1, 1}
-			};
-			_matrixG = new MatrixG(length: matrix[0].Count,
-				dimension: matrix.Count,
-				matrix: matrix);
-
-			matrix = new List<List<byte>>(3)
+				_errorChance = _validator.ValidateErrorProbability(input);
+				_channel = new Channel(_errorChance);
+			}
+			catch (Exception ex)
 			{
-				new List<byte> {1, 0, 1, 0, 0},
-				new List<byte> {1, 1, 0, 1, 0},
-				new List<byte> {0, 1, 0, 0, 1}
-			};
-			_matrixH = new MatrixH(matrix);
-			#endregion
+				_errorChance = -1;
+				_errorMessage = ex.Message;
+			}
 
-
-			var pathToOpen = "C:\\test(smaller).bmp";
-			var pathToSaveEncoded = "C:\\Users\\Benas\\Desktop\\encoded.bmp";
-			var pathToSavePlain = "C:\\Users\\Benas\\Desktop\\unencoded.bmp";
-			ImageToSend.Source = new BitmapImage(new Uri(pathToOpen));
-
-			// Encode and send image.
-			SendImageAsEncoded(source: pathToOpen, destination: pathToSaveEncoded);
-
-			// Don't encode and send image
-			SendImageAsPlain(source: pathToOpen, destination: pathToSavePlain);
-
-			// 6. Open the image.
-			ImageEncoded.Source = new BitmapImage(new Uri(pathToSaveEncoded));
-			ImagePlain.Source = new BitmapImage(new Uri(pathToSavePlain));
+			ShowErrorMessage();
 		}
 
-		private void SendImageAsPlain(string source, string destination)
+		/// <summary>
+		/// Funkcija iškviečiama, kuomet vartotojas įveda bet kokį simbolį į matricos ilgio langelį.
+		/// </summary>
+		private void InputCols_TextChanged(object sender, TextChangedEventArgs e)
 		{
-			// 1. Open the file - contains stuff like: 58, 49, 112, ...
-			var imageAsVector = File.ReadAllBytes(source);
+			var input = ((TextBox)sender).Text;
 
-			// 2. Convert the decimal vector to binary text.
-			var imageAsBinaryString = ConvertDecimalVectorToBinaryString(imageAsVector);
+			try
+			{
+				_cols = _validator.ValidateNumberOfCols(input);
+			}
+			catch (Exception ex)
+			{
+				_cols = -1;
+				_errorMessage = ex.Message;
+			}
 
-			// 3. Convert the binary text to binary vector.
-			var imageAsBinaryVector = ConvertBinaryStringToBinaryVector(imageAsBinaryString);
+			ShowErrorMessage();
+		}
 
-			// 4. The header of the image cannot be corrupted so we separate.
+		/// <summary>
+		/// Funkcija iškviečiama, kuomet vartotojas įveda bet kokį simbolį į kodo dimensijos langelį.
+		/// </summary>
+		private void InputRows_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			var input = ((TextBox)sender).Text;
+
+			try
+			{
+				_rows = _validator.ValidateNumberOfRows(input);
+			}
+			catch (Exception ex)
+			{
+				_rows = -1;
+				_errorMessage = ex.Message;
+			}
+
+			ShowErrorMessage();
+		}
+
+		/// <summary>
+		/// Funkcija iškviečiama, kuomet vartotojas padeda varnelę ant "Įvesiu savo matricą" langelį.
+		/// </summary>
+		private void CheckBoxOwnMatrix_Checked(object sender, RoutedEventArgs e)
+		{
+			var value = ((CheckBox)sender).IsChecked;
+
+			if (value.HasValue && value.Value)
+				_entersOwnMatrix = true;
+
+			else
+				_entersOwnMatrix = false;
+		}
+
+		/// <summary>
+		/// Funkcija iškviečiama, kuomet vartotojas paspaudžia "Pateikti" mygtuką.
+		/// </summary>
+		private void ButtonSubmitVariables_Click(object sender, RoutedEventArgs e)
+		{
+			var inputIsValid = false;
+
+			if (_errorChance == -1)
+				_errorMessage = "Neteisingai įvesta klaidos tikimybė (p).";
+
+			else if (_cols == -1)
+				_errorMessage = "Neteisingai įvestas matricos ilgis (n).";
+
+			else if (_rows == -1)
+				_errorMessage = "Neteisingai įvesta matricos dimensija (k).";
+
+			else
+				inputIsValid = true;
+
+			if (!inputIsValid)
+			{
+				ShowErrorMessage();
+				return;
+			}
+
+			// Paslepiame kodo ilgį.
+			InputCols.Visibility = Visibility.Hidden;
+			LabelCols.Visibility = Visibility.Hidden;
+
+			// Paslepiame kodo dimensiją.
+			InputRows.Visibility = Visibility.Hidden;
+			LabelRows.Visibility = Visibility.Hidden;
+
+			// Paslepiame kas liko.
+			CheckBoxOwnMatrix.Visibility = Visibility.Hidden;     // Varnelė savo matricos pateikimui.
+			ButtonSubmitVariables.Visibility = Visibility.Hidden; // Mygtukas visko pateikimui.
+
+			if (_entersOwnMatrix)
+			{
+				LetUserEnterGMatrix();
+			}
+			else
+			{
+				_matrixG = new MatrixG(_cols, _rows);
+				_matrixH = _matrixG.GetMatrixH();
+				// Paslepiame nebeaktualius langelius ir parodome aktualius.
+				HideInputFieldsAndShowChooseImage();
+			}
+		}
+
+		#region Jeigu vartotojas pats nori įvesti matricą.
+
+		/// <summary>
+		/// Parodo laukus, atsakingus už norimos matricos įvedimą.
+		/// </summary>
+		private void LetUserEnterGMatrix()
+		{
+			_tempMatrix = new List<List<byte>>(_rows);
+
+			InputMatrixRow.Visibility = Visibility.Visible;
+			LabelInputMatrixRow.Visibility = Visibility.Visible;
+			LabelAdviceInputMatrixRow.Visibility = Visibility.Visible;
+
+			var row = _tempMatrix.Count + 1;
+			LabelInputMatrixRow.Content = $"Įveskite {row}-ąjį vektorių: ";
+		}
+
+		/// <summary>
+		/// Funkcija iškviečiama, kuomet vartotojas paspaudžia "Enter" klavišą įvedęs vektorių matricai.
+		/// </summary>
+		private void InputMatrixRow_KeyUp(object sender, KeyEventArgs e)
+		{
+			// Reiškia matrica jau sukurta - nebereikia čia nieko daryti.
+			if (_matrixG != null)
+				return;
+
+			if (e.Key != Key.Enter)
+				return;
+
+			try
+			{
+				// Patikriname ar įvestas vektorius tinkamas matricai.
+				var row = _validator.ValidateGMatrixRow(InputMatrixRow.Text);
+				_tempMatrix.Add(row);
+				InputMatrixRow.Text = string.Empty;
+				LabelInputMatrixRow.Content = $"Įveskite {_tempMatrix.Count + 1}-ąjį vektorių: ";
+
+				// Jeigu jau turime pakankamai matricos eilučių.
+				if (_tempMatrix.Count == _rows)
+				{
+					try
+					{
+						_matrixG = new MatrixG(length: _cols, dimension: _rows, matrix: _tempMatrix);
+						_matrixH = _matrixG.GetMatrixH();
+						// Paslepiame nebeaktualius langelius ir parodome aktualius.
+						HideInputFieldsAndShowChooseImage();
+					}
+					catch (Exception ex)
+					{
+						_errorMessage = ex.Message;
+						ShowErrorMessage();
+						// Nepavyko sukurti matricos iš paduotų vektorių tad išvalome esamą matricą.
+						_tempMatrix.Clear();
+						LabelInputMatrixRow.Content = $"Įveskite {_tempMatrix.Count + 1}-ąjį vektorių: ";
+					}
+				}
+			}
+			// Jeigu buvo įvestas netinkamas vektorius.
+			catch (Exception ex)
+			{
+				_errorMessage = ex.Message;
+				ShowErrorMessage();
+			}
+		}
+
+		#endregion
+
+		#endregion
+
+		#region Pasiruošimas nuotraukos siuntimui kanalu.
+
+		/// <summary>
+		///  Paslepia matricos kintamųjų surinkimo langelius ir parodo teksto siuntimui kanalu reikalingus langelius.
+		/// </summary>
+		private void HideInputFieldsAndShowChooseImage()
+		{
+			HideErrorMessage();
+
+			// Paslepiame kodo ilgį.
+			InputCols.Visibility = Visibility.Hidden;
+			LabelCols.Visibility = Visibility.Hidden;
+
+			// Paslepiame kodo dimensiją.
+			InputRows.Visibility = Visibility.Hidden;
+			LabelRows.Visibility = Visibility.Hidden;
+
+			// Paslepiame matricos vektoriaus įvedimo laukus.
+			LabelAdviceInputMatrixRow.Visibility = Visibility.Hidden;
+			LabelInputMatrixRow.Visibility = Visibility.Hidden;
+			InputMatrixRow.Visibility = Visibility.Hidden;
+
+			// Paslepiame kas liko.
+			CheckBoxOwnMatrix.Visibility = Visibility.Hidden;     // Varnelė savo matricos pateikimui.
+			ButtonSubmitVariables.Visibility = Visibility.Hidden; // Mygtukas visko pateikimui.
+
+			ButtonChooseImageToSend.Visibility = Visibility.Visible; // Mygtukas paveikslėlio pasirinkimui.
+
+			// Patarimai.
+			LabelAdvice1.Visibility = Visibility.Visible;
+			LabelAdvice2.Visibility = Visibility.Visible;
+		}
+
+		/// <summary>
+		/// Parodo paveikslėlių langelius ir jų etiketes.
+		/// </summary>
+		private void ShowImageFields()
+		{
+			LabelImageToSend.Visibility = Visibility.Visible;
+			ImageToSend.Visibility = Visibility.Visible;
+
+			LabelImagePlain.Visibility = Visibility.Visible;
+			ImagePlain.Visibility = Visibility.Visible;
+
+			LabelImageEncoded.Visibility = Visibility.Visible;
+			ImageEncoded.Visibility = Visibility.Visible;
+		}
+
+		#endregion
+
+		#region Nuotraukos siuntimas kanalu.
+
+		/// <summary>
+		/// Funkcija iškviečiama, kuomet vartotojas paspausdžia mygtuką pasirinkt nuotrauką, kurią nori siųsti kanalu.
+		/// </summary>
+		private void ButtonChooseImageToSend_Click(object sender, RoutedEventArgs e)
+		{
+			OpenFileDialog window = new OpenFileDialog();
+
+			if (window.ShowDialog() == true)
+				_pathToOpenImage = window.FileName;
+
+			try
+			{
+				// Ar nuotrauką galime atidaryti?
+				var test = new BitmapImage(new Uri(_pathToOpenImage));
+				if (_areImageFieldsShow)
+				{
+					ShowImageFields();
+					_areImageFieldsShow = true;
+				}
+				_pathToSaveEncodedImage = GenerateImagePaths("encoded");
+				_pathToSavePlainImage = GenerateImagePaths("plain");
+				SendImagesThroughTheChannel();
+			}
+			catch (Exception ex)
+			{
+				_pathToSaveEncodedImage = string.Empty;
+				_pathToSavePlainImage = string.Empty;
+				_pathToOpenImage = string.Empty;
+				_errorMessage = ex.Message;
+				ShowErrorMessage();
+			}
+		}
+
+		/// <summary>
+		/// Parengia vartotojo pasirinktą nuotrauką siuntimui koduotu ir nekoduotu būdu.
+		/// </summary>
+		private void SendImagesThroughTheChannel()
+		{
+			ButtonChooseImageToSend.IsEnabled = false;
+
+			// Nuotrauka, siųsta be kodavimo.
+			ImagePlain.Source = null;
+			ImagePlain.Visibility = Visibility.Hidden;
+			LabelImagePlain.Visibility = Visibility.Hidden;
+			ImagePlain.Source = SendImageAsPlain(pathToOpenImage: _pathToOpenImage, pathWhereToSaveResult: _pathToSavePlainImage);
+			LabelImagePlain.Visibility = Visibility.Visible;
+			ImagePlain.Visibility = Visibility.Visible;
+
+			// Nuotrauka, siųsta su kodavimu.
+			ImageEncoded.Source = null;
+			ImageEncoded.Visibility = Visibility.Hidden;
+			LabelImageEncoded.Visibility = Visibility.Hidden;
+			ImageEncoded.Source = SendImageAsEncoded(pathToOpenImage: _pathToOpenImage, pathWhereToSaveResult: _pathToSaveEncodedImage);
+			LabelImageEncoded.Visibility = Visibility.Visible;
+			ImageEncoded.Visibility = Visibility.Visible;
+
+			// Nuotrauka siuntimui.
+			ImageToSend.Source = null;
+			ImageToSend.Visibility = Visibility.Hidden;
+			LabelImageToSend.Visibility = Visibility.Hidden;
+			ImageToSend.Source = new BitmapImage(new Uri(_pathToOpenImage));
+			LabelImageToSend.Visibility = Visibility.Visible;
+			ImageToSend.Visibility = Visibility.Visible;
+
+			ButtonChooseImageToSend.IsEnabled = true;
+		}
+
+
+		/// <summary>
+		/// Išsiunčia neužkoduotą paveikslėlį nesaugiu kanalu.
+		/// </summary>
+		/// <param name="pathToOpenImage">Kelias iki paveikslėlio, kurį reikės siųsti kanalu.</param>
+		/// <param name="pathWhereToSaveResult">Kelias, kur galima išsaugoti iš kanalo gautą paveikslėlį.</param>
+		/// <returns>Adresą į kanale iškraipytą neužkoduotą paveikslėlį.</returns>
+		private BitmapImage SendImageAsPlain(string pathToOpenImage, string pathWhereToSaveResult)
+		{
+			// 1. Atsidarome paveikslėlį ir gauname sąrašą dešimtainių skaitmenų: 58, 49, 112, ...
+			var imageAsDecimalVector = File.ReadAllBytes(pathToOpenImage);
+
+			// 2. Konvertuojame sąrašą į simbolių eilutę iš 0 ir 1.
+			var imageAsBinaryString = Converter.DecimalVectorToBinaryString(imageAsDecimalVector);
+
+			// 3. Konvertuojame simbolių eilutę į dvejetainį sąrašą.
+			var imageAsBinaryVector = Converter.BinaryStringToBinaryVector(imageAsBinaryString);
+
+			// 4. Vektoriaus pradžioje yra laikoma kontrolinė informacija, tad jos negalime siųsti kanalu.
+			//		1104 = (14 baitų (bitmap header) + 124 baitai (DIB header)) * 8 bitai.
 			IList<byte> vectorToSend = new List<byte>();
 			for (var i = 1104; i < imageAsBinaryVector.Count; i++)
 				vectorToSend.Add(imageAsBinaryVector[i]);
 
-			var deformed = _channel.SendVectorThrough(vectorToSend);
+			// 5. Siunčiame vektorių iškraipymui
+			var deformedBinaryVector = _channel.SendVectorThrough(vectorToSend);
 
+			// 6.Sujungiame atgal į vieną kontrolinę informaciją ir iškraipytąjį vektorių.
 			vectorToSend.Clear();
 			for (var i = 0; i < 1104; i++)
 				vectorToSend.Add(imageAsBinaryVector[i]);
 
-			for (var i = 0; i < deformed.Count; i++)
-				vectorToSend.Add(deformed[i]);
+			foreach (byte bit in deformedBinaryVector)
+				vectorToSend.Add(bit);
 
-			var result = ConvertBinaryVectorToDecimalVector(vectorToSend);
+			// 7. Paruošiame naująjį vektoriui konvertavimui į paveikslėlį.
+			var resultAsDecimalVector = Converter.BinaryVectorToDecimalVector(vectorToSend);
 
-			var _imageConverter = new ImageConverter();
-			Bitmap bm = (Bitmap)_imageConverter.ConvertFrom(result.ToArray());
-			bm.Save(destination);
+			// 8. Konvertuojame į paveikslėlį.
+			var imageConverter = new ImageConverter();
+			Bitmap bitmap = (Bitmap)imageConverter.ConvertFrom(resultAsDecimalVector.ToArray());
+			bitmap.Save(pathWhereToSaveResult);
+
+			return new BitmapImage(new Uri(pathWhereToSaveResult));
 		}
 
-		private IList<byte> ConvertBinaryStringToBinaryVector(string binaryString)
+
+		/// <summary>
+		/// Išsiunčia užkoduotą paveikslėlį nesaugiu kanalu.
+		/// </summary>
+		/// <param name="pathToOpenImage">Kelias iki paveikslėlio, kurį reikės siųsti kanalu.</param>
+		/// <param name="pathWhereToSaveResult">Kelias, kur galima išsaugoti iš kanalo gautą paveikslėlį.</param>
+		/// <returns>Adresą į kanale iškraipytą užkoduotą paveikslėlį.</returns>
+		private BitmapImage SendImageAsEncoded(string pathToOpenImage, string pathWhereToSaveResult)
 		{
-			var binaryVector = new List<byte>();
+			// 1. Atsidarome paveikslėlį ir gauname sąrašą dešimtainių skaitmenų: 58, 49, 112, ...
+			var imageAsDecimalVector = File.ReadAllBytes(pathToOpenImage);
 
-			foreach (var bit in binaryString)
-			{
-				if (bit == '0')
-					binaryVector.Add(0);
-				else if (bit == '1')
-					binaryVector.Add(1);
-				else
-				{
-					throw new ArgumentException("Tekstas privalo būti sudarytas tik iš 0 ir 1.");
-				}
-			}
+			// 2. Konvertuojame sąrašą į simbolių eilutę iš 0 ir 1.
+			var imageAsBinaryString = Converter.DecimalVectorToBinaryString(imageAsDecimalVector);
 
-			return binaryVector;
-		}
-
-		private void SendImageAsEncoded(string source, string destination)
-		{
-			// 1. Open the file - contains stuff like: 58, 49, 112, ...
-			var imageAsVector = File.ReadAllBytes(source);
-
-			// 2. Convert the vector to binary text.
-			var imageAsBinaryString = ConvertDecimalVectorToBinaryString(imageAsVector);
-
-			// 3. Send the text through the channel.
+			// 3. Dvejetainę simbolių eilutę daliname dalimis po aštuonis, dalį kovertuojame į dvejetainį vektorių, 
+			//		jį iškraipome, rezultatą paverčiame atgal į dvejetainę simbolių eilutę ir grąžiname čia.
 			var deformedImageAsBinaryString = SendBinaryStringThroughChannel(imageAsBinaryString);
 
-			// 4. Convert binary text back to a vector.
-			var deformedImageAsVector = ConvertBinaryStringToVector(deformedImageAsBinaryString);
+			// 4. Konvertuojame dvejetainį tekstą atgal į dešimtainį vektorių.
+			var deformedImageAsDecimalVector = Converter.BinaryStringToDecimalVector(deformedImageAsBinaryString);
 
-			// 5. Save the vector as file.
-			var _imageConverter = new ImageConverter();
+			// 5. Paverčiame atgal į paveikslėlį ir išsaugome.
+			var imageConverter = new ImageConverter();
+			Bitmap bitmap = (Bitmap)imageConverter.ConvertFrom(deformedImageAsDecimalVector.ToArray());
+			bitmap.Save(pathWhereToSaveResult);
 
-			Bitmap bm = (Bitmap)_imageConverter.ConvertFrom(deformedImageAsVector.ToArray());
-
-			if (bm != null && (bm.HorizontalResolution != (int)bm.HorizontalResolution ||
-			                   bm.VerticalResolution != (int)bm.VerticalResolution))
-			{
-				// Correct a strange glitch that has been observed in the test program when converting 
-				//  from a PNG file image created by CopyImageToByteArray() - the dpi value "drifts" 
-				//  slightly away from the nominal integer value
-				bm.SetResolution((int)(bm.HorizontalResolution + 0.5f),
-					(int)(bm.VerticalResolution + 0.5f));
-			}
-
-			bm.Save(destination);
+			return new BitmapImage(new Uri(pathWhereToSaveResult));
 		}
 
-		private IList<byte> ConvertBinaryVectorToDecimalVector(IList<byte> binaryVector)
-		{
-			var decimalVector = new List<byte>();
-
-			for (var i = 0; i < binaryVector.Count;)
-			{
-				var binaryNumber = "";
-				for (var c = 0; c < 8; c++)
-				{
-					if (i == binaryVector.Count)
-					{
-						binaryNumber = '0' + binaryNumber;
-					}
-					else
-					{
-						binaryNumber += binaryVector[i];
-						i++;
-					}
-				}
-				decimalVector.Add(Convert.ToByte(value: binaryNumber, fromBase: 2));
-			}
-
-			return decimalVector;
-		}
-
-		private IList<byte> ConvertBinaryStringToVector(string binaryText)
-		{
-			var vector = new List<byte>();
-
-			for (var i = 0; i < binaryText.Length; i++)
-			{
-				var binaryNumber = "";
-				for (var c = 0; c < 8; c++)
-				{
-					if (i != binaryText.Length)
-					{
-						binaryNumber += binaryText[i];
-						i++;
-					}
-					else
-					{
-						binaryNumber = '0' + binaryNumber;
-					}
-				}
-				var decimalNumber = Convert.ToByte(binaryNumber, 2);
-				vector.Add(decimalNumber);
-
-				// Kad ciklas neperšoktų vis po vieną.
-				i--;
-			}
-
-			return vector;
-		}
-
-		private string ConvertDecimalVectorToBinaryString(IList<byte> vector)
-		{
-			var text = new StringBuilder();
-
-			foreach (var number in vector)
-			{
-				var binaryNumber = Convert.ToString(value: number, toBase: 2).PadLeft(totalWidth: 8, paddingChar: '0');
-				text.Append(binaryNumber);
-			}
-
-			return text.ToString();
-		}
-
+		/// <summary>
+		/// Iškraipo paduotą simbolių eilutę (0 gali tapti 1 ir atvirkščiai).
+		/// </summary>
+		/// <param name="binaryString">Simbolių eilutė, sudaryta iš 0 ir 1.</param>
+		/// <returns>Iškraipytą simbolių eilutę.</returns>
 		private string SendBinaryStringThroughChannel(string binaryString)
 		{
 			var stringBuilder = new StringBuilder();
 
-			// Nepradedame nuo 0, nes reikia išsaugoti kai kurią kontrolinę nuotraukos informaciją.
 			for (var c = 0; c < binaryString.Length;)
 			{
-				// 2. Daliname į tokio ilgio dalis, kad sutaptų su kodo dimensija.
+				// 1. Daliname į tokio ilgio dalis, kad sutaptų su kodo dimensija.
 				var toEncodeAsString = string.Empty;
 				for (var r = 0; r < _rows; r++)
 				{
@@ -243,15 +457,14 @@ namespace Scenario3
 					}
 				}
 
-				// 3. Užkoduojame generuojančia matrica.
-				var toEncodeAsList = ConvertStringToVector(toEncodeAsString);
+				// 2. Užkoduojame generuojančia matrica.
+				var toEncodeAsList = Converter.BinaryStringToBinaryVector(toEncodeAsString);
 				var encoded = _matrixG.Encode(toEncodeAsList);
 
-				IList<byte> deformed;
-				// Todo: explain magical number.
-				// Todo: https://en.wikipedia.org/wiki/BMP_file_format
-				deformed = c >= 1104 
-					? _channel.SendVectorThrough(encoded) 
+				// 1104 = (14 baitų (bitmap header) + 124 baitai (DIB header)) * 8 bitai.
+				// Jeigu tai kontrolinė informacija tuomet jos nesiunčiame kanalu.
+				var deformed = c >= 1104
+					? _channel.SendVectorThrough(encoded)
 					: encoded;
 
 				// 5. Atkoduojame 'Step-by-Step' algoritmu.
@@ -268,142 +481,55 @@ namespace Scenario3
 			return stringBuilder.ToString();
 		}
 
-		private List<byte> ConvertStringToVector(string vector)
+		#endregion
+
+		#region Pagalbiniai metodai.
+
+		/// <summary>
+		/// Parodo klaidos pranešimą.
+		/// </summary>
+		private void ShowErrorMessage()
 		{
-			var realVector = new List<byte>();
-
-			foreach (var number in vector)
-			{
-				realVector.Add((byte)int.Parse(number + ""));
-			}
-
-			return realVector;
+			LabelErrorMessage.Content = _errorMessage;
+			_errorMessage = string.Empty;
 		}
 
-		//// Todo: change name to better reflect function.
-		//// Todo: the same in 'Scenario2'.
-		//private string SendEncodedText(string text)
-		//{
-		//	var textAsVector = new List<byte>();
+		/// <summary>
+		/// Paslepia klaidos pranešimą.
+		/// </summary>
+		private void HideErrorMessage()
+		{
+			LabelErrorMessage.Content = string.Empty;
+		}
 
-		//	// 1. Konvertuojame tekstą į dvejetainę simbolių eilutę.
-		//	var textInBinary = ConvertTextToBinary(text);
+		/// <summary>
+		/// Sugeneruoja pavadinimus paveikslėliams, kuriuos išsaugosime.
+		/// </summary>
+		/// <param name="forWhichImage">Žodis, kuris bus pavadinime, kad būtų galima atskirti tarp encoded ir plain.</param>
+		/// <returns>Kelias iki paveikslėlio.</returns>
+		private static string GenerateImagePaths(string forWhichImage)
+		{
+			var directoryPath = Directory.GetCurrentDirectory();
+			var allFilesInDirectory = Directory.GetFiles(directoryPath);
 
-		//	// 2. Daliname į tokio ilgio dalis, kad sutaptų su kodo dimensija.
-		//	for (var c = 0; c < textInBinary.Length;)
-		//	{
-		//		var toEncodeAsString = string.Empty;
-		//		for (var r = 0; r < _rows; r++)
-		//		{
-		//			// Jeigu pasibaigė tekstas, tačiau mums vis tiek reikia simbolių.
-		//			if (c == textInBinary.Length)
-		//			{
-		//				// Pridedame nulį priekyje, kad nepasikeistų dvejetainio skaičiaus reikšmė.
-		//				toEncodeAsString = '0' + toEncodeAsString;
-		//			}
-		//			else
-		//			{
-		//				toEncodeAsString += textInBinary[c];
-		//				c++;
-		//			}
-		//		}
+			for (var i = 0; i < 100000; i++)
+			{
+				var encodedName = Path.Combine(directoryPath, $"{forWhichImage}_{i}.bmp");
 
-		//		// 3. Užkoduojame generuojančia matrica.
-		//		var toEncodeAsList = ConvertStringToByteList(toEncodeAsString);
-		//		var encoded = _matrixG.Encode(toEncodeAsList);
+				// Patikriname ar toks failas jau egzistuoja.
+				var match = allFilesInDirectory.FirstOrDefault(f => f == encodedName);
 
-		//		// 4. Siunčiame kanalu.
-		//		var deformed = _channel.SendVectorThrough(encoded);
+				// Nėra tokio failo.
+				if (match == default(string))
+				{
+					return encodedName;
+				}
+			}
 
-		//		// 5. Atkoduojame 'Step-by-Step' algoritmu.
-		//		var decoded = _matrixH.Decode(deformed);
+			// Todo: nenori pakeisti šito?
+			throw new Exception("Ups.");
+		}
 
-		//		// 6. Atkoduojame generuojančia matrica.
-		//		var fullyDecoded = _matrixG.Decode(decoded);
-
-		//		// 7. Viską sudedame į vieną ilgą vektorių.
-		//		foreach (var bit in fullyDecoded)
-		//			textAsVector.Add(bit);
-		//	}
-
-		//	return ConvertBinaryVectorToText(textAsVector);
-		//}
-
-		//private string ConvertTextToBinary(string text)
-		//{
-		//	// 'textAsBytes' reikšmės bus maždaug 89, 112, 201, 5, ...
-		//	// Todo: leave it at ASCII?
-		//	var textAsBytes = Encoding.ASCII.GetBytes(text);
-		//	var stringBuilder = new StringBuilder();
-
-		//	// Paverčiame į simbolių eilutę iš nulių ir vienetų.
-		//	foreach (var word in textAsBytes)
-		//	{
-		//		// '@' simbolis naudojamas, kad kompiliatorius suprastų, jog 'byte' yra kintamasis.
-		//		var @byte = Convert.ToString(value: word, toBase: 2)
-		//						   .PadLeft(totalWidth: 8, paddingChar: '0');
-		//		stringBuilder.Append(@byte);
-		//	}
-
-		//	return stringBuilder.ToString();
-		//}
-
-		//// Todo: change elsewhere to IList.
-		//private string ConvertBinaryVectorToText(IList<byte> vector)
-		//{
-		//	var textInBinary = ConvertByteListToString(vector);
-		//	var decodedTextAsList = new List<byte>();
-
-		//	for (var i = 0; i < textInBinary.Length;)
-		//	{
-		//		// Susiskaidome į vektorių su 8 bitais.
-		//		var byteAsBinaryString = string.Empty;
-		//		for (var c = 0; c < 8; c++)
-		//		{
-		//			// Jeigu turimas tekstas pasibaigė, tačiau pildomas vektorius
-		//			//		nėra 8 simbolių ilgio - nedarome nieko.
-		//			if (i == textInBinary.Length)
-		//				c++;
-
-		//			else
-		//			{
-		//				byteAsBinaryString += textInBinary[i];
-		//				i++;
-		//			}
-		//		}
-
-		//		// Konvertuojame iš dvejetainės į dešimtainę.
-		//		var decimalNumber = Convert.ToByte(value: byteAsBinaryString, fromBase: 2);
-		//		decodedTextAsList.Add(decimalNumber);
-		//	}
-
-		//	return Encoding.ASCII.GetString(decodedTextAsList.ToArray());
-		//}
-
-		//private static string ConvertByteListToString(IList<byte> vector)
-		//{
-		//	var result = string.Empty;
-		//	foreach (var bit in vector)
-		//	{
-		//		if (bit == 0)
-		//			result += '0';
-		//		else
-		//			result += '1';
-		//	}
-		//	return result;
-		//}
-
-		//// Todo: change argument name.
-		//// Todo: change return type?
-		//// Todo: the same in 'Scenario2'.
-		//private static IList<byte> ConvertStringToByteList(string vector)
-		//{
-		//	var list = new List<byte>();
-
-		//	foreach (var bit in vector)
-		//		list.Add(bit == '0' ? (byte)0 : (byte)1);
-
-		//	return list;
-		//}
+		#endregion
 	}
 }

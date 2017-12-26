@@ -15,20 +15,20 @@ namespace Scenario2
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		private string _errorMessage = string.Empty;    // Naudojamas klaidos žinutėms atvaizduoti.
-		private Validator _validator = new Validator(); // Naudojamas vartotojo įvesties validavimui.
-
 		private int _rows = -1; // '_matrixG' dimensija (k).
 		private int _cols = -1; // '_matrixG' ilgis (n).
 		private MatrixG _matrixG; // G matrica (vartotojo įvesta arba kompiuterio sugeneruota).
 		private MatrixH _matrixH; // H matrica (gauta iš '_matrixG').
 
+		private bool _entersOwnMatrix;        // Ar vartotojas pats įves generuojančią matricą?
+		private List<List<byte>> _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
+
 		private string _textToSend;       // Tekstas, kurį siųsime kanalu.
 		private Channel _channel;         // Kanalas, kuriuo siųsiu vektorius.
 		private double _errorChance = -1; // Tikimybė kanale įvykti klaidai (p). -1, nes 0 yra leidžiama reikšmė.
 
-		private bool _entersOwnMatrix;        // Ar vartotojas pats įves generuojančią matricą?
-		private List<List<byte>> _tempMatrix; // Laikina matrica, kurią naudosiu vartotojui pačiam suvedinėjant G matricą.
+		private string _errorMessage = string.Empty;    // Naudojamas klaidos žinutėms atvaizduoti.
+		private Validator _validator = new Validator(); // Naudojamas vartotojo įvesties validavimui.
 
 		// Naudojami statistikai.
 		private bool _shouldCountersBeNulled;   // Ar reikia pradėti statistiką skaičiuoti iš naujo? (Pvz.: jei pakeitė tekstą siuntimui)
@@ -54,7 +54,11 @@ namespace Scenario2
 				// Nes negalima toliau pildyti statistikos su naujai pateikta klaidos tikimybe.
 				_shouldCountersBeNulled = true;
 			}
-			catch (Exception ex) { _errorMessage = ex.Message; }
+			catch (Exception ex)
+			{
+				_errorChance = -1;
+				_errorMessage = ex.Message;
+			}
 
 			ShowErrorMessage();
 		}
@@ -66,8 +70,15 @@ namespace Scenario2
 		{
 			var input = ((TextBox)sender).Text;
 
-			try { _cols = _validator.ValidateNumberOfCols(input); }
-			catch (Exception ex) { _errorMessage = ex.Message; }
+			try
+			{
+				_cols = _validator.ValidateNumberOfCols(input);
+			}
+			catch (Exception ex)
+			{
+				_cols = -1;
+				_errorMessage = ex.Message;
+			}
 
 			ShowErrorMessage();
 		}
@@ -79,8 +90,15 @@ namespace Scenario2
 		{
 			var input = ((TextBox)sender).Text;
 
-			try { _rows = _validator.ValidateNumberOfRows(input); }
-			catch (Exception ex) { _errorMessage = ex.Message; }
+			try
+			{
+				_rows = _validator.ValidateNumberOfRows(input);
+			}
+			catch (Exception ex)
+			{
+				_rows = -1;
+				_errorMessage = ex.Message;
+			}
 
 			ShowErrorMessage();
 		}
@@ -138,7 +156,6 @@ namespace Scenario2
 
 			if (_entersOwnMatrix)
 			{
-				LabelAdviceInputMatrixRow.Visibility = Visibility.Visible;
 				LetUserEnterGMatrix();
 			}
 			else
@@ -161,6 +178,7 @@ namespace Scenario2
 
 			InputMatrixRow.Visibility = Visibility.Visible;
 			LabelInputMatrixRow.Visibility = Visibility.Visible;
+			LabelAdviceInputMatrixRow.Visibility = Visibility.Visible;
 
 			var row = _tempMatrix.Count + 1;
 			LabelInputMatrixRow.Content = $"Įveskite {row}-ąjį vektorių: ";

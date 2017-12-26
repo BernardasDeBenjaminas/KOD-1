@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="Channel.cs" />
     <Compile Include="ConsoleHelper.cs" />
+    <Compile Include="Converter.cs" />
     <Compile Include="Field.cs" />
     <Compile Include="MatrixG.cs" />
     <Compile Include="MatrixH.cs" />
