@@ -21,13 +21,13 @@ namespace Scenario1
 
 		private Channel _channel; // Kanalas, kuriuo siųsiu vektorius.
 		private double _errorProbability = -1; // Tikimybė kanale įvykti klaidai (p). -1, nes 0 yra leidžiama reikšmė.
-		private List<byte> _errorVector; // Klaidos vektorius.
+		private IList<byte> _errorVector; // Klaidos vektorius.
 
-		private List<byte> _originalVector;	// Vartotojo žodis, kurį siųsime kanalu.
-		private List<byte> _encodedVector;   // '_originalVector'  užkoduotas G matrica.
-		private List<byte> _distortedVector; // '_encodedVector'   išsiųstas kanalu (galimai iškraipytas).
-		private List<byte> _decodedVector;   // '_distortedVector' dekoduotas H matrica.
-		private List<byte> _receivedVector;  // '_decodedVector'   dekoduotas G matrica.
+		private IList<byte> _originalVector;	// Vartotojo žodis, kurį siųsime kanalu.
+		private IList<byte> _encodedVector;   // '_originalVector'  užkoduotas G matrica.
+		private IList<byte> _distortedVector; // '_encodedVector'   išsiųstas kanalu (galimai iškraipytas).
+		private IList<byte> _decodedVector;   // '_distortedVector' dekoduotas H matrica.
+		private IList<byte> _receivedVector;  // '_decodedVector'   dekoduotas G matrica.
 
 
 		// PUBLIC
@@ -133,7 +133,7 @@ namespace Scenario1
 		/// Per vartotojo sąsają priima vektorių siuntimui kanalu.
 		/// </summary>
 		/// <returns>Vektorius, kurį turėsime siųsti kanalu (m).</returns>
-		private List<byte> GetVectorToSend()
+		private IList<byte> GetVectorToSend()
 		{
 			while (true)
 			{

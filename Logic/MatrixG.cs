@@ -46,7 +46,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį reikia užkoduoti.</param>
 		/// <returns>Generuojančia matrica užkoduotas vektorius.</returns>
-		public List<byte> Encode(List<byte> vector)
+		public IList<byte> Encode(IList<byte> vector)
 		{
 			if (vector.Count != _rows)
 				throw new ArgumentException("\nVektoriaus ilgis privalo sutapti su matricos dimensija.");
@@ -65,7 +65,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį reikia dekoduoti.</param>
 		/// <returns>Generuojančia matrica dekoduotas vektorius.</returns>
-		public List<byte> Decode(List<byte> vector)
+		public IList<byte> Decode(IList<byte> vector)
 		{
 			if (vector.Count != _cols)
 				throw new ArgumentException("\nPateikto vektoriaus ilgis privalo sutapti su matricos ilgiu.");

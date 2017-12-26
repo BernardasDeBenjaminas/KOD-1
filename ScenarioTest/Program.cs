@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Net.Mime;
 using System.Text;
 using Logic;
 
@@ -9,6 +12,9 @@ namespace ScenarioTest
 	{
 		public static void Main(string[] args)
 		{
+			var vector = File.ReadAllBytes("C:\\test.bmp");
+			int i = 5;
+
 			#region Creation of matrices.
 			var matrix = new List<List<byte>>(2)
 			{
@@ -28,89 +34,89 @@ namespace ScenarioTest
 			var matrixH = new MatrixH(matrix);
 			#endregion
 
-			var channel = new Channel(0.09);
+			//var channel = new Channel(0.09);
 
-			var text = "Some sample text.";
-			// This will contain something like: 89, 112, 201, 5, ...
-			var textAsBytes = Encoding.ASCII.GetBytes(text);
-			var stringBuilder = new StringBuilder();
+			//var text = "Some sample text.";
+			//// This will contain something like: 89, 112, 201, 5, ...
+			//var textAsBytes = Encoding.ASCII.GetBytes(text);
+			//var stringBuilder = new StringBuilder();
 
-			// 1. Convert the text into a string made up of binary symbols.
-			foreach (var word in textAsBytes)
-			{
-				var @byte = Convert.ToString(value: word, toBase: 2)
-								   .PadLeft(totalWidth: 8, paddingChar: '0');
-				stringBuilder.Append(@byte);
-			}
+			//// 1. Convert the text into a string made up of binary symbols.
+			//foreach (var word in textAsBytes)
+			//{
+			//	var @byte = Convert.ToString(value: word, toBase: 2)
+			//					   .PadLeft(totalWidth: 8, paddingChar: '0');
+			//	stringBuilder.Append(@byte);
+			//}
 
-			// 2. Split it into length that matches the dimension of the matrix.
-			var addedExtra = 0;
-			var rows = 2;
-			var textInBinary = stringBuilder.ToString();
-			stringBuilder = stringBuilder.Clear();
-			for (var c = 0; c < textInBinary.Length;)
-			{
-				var toEncodeAsString = string.Empty;
-				for (var r = 0; r < rows; r++)
-				{
-					if (c == textInBinary.Length)
-					{
-						toEncodeAsString += '0';
-						addedExtra++;
-					}
-					else
-					{
-						toEncodeAsString += textInBinary[c];
-						c++; // Move to the next bit.	
-					}
-				}
+			//// 2. Split it into length that matches the dimension of the matrix.
+			//var addedExtra = 0;
+			//var rows = 2;
+			//var textInBinary = stringBuilder.ToString();
+			//stringBuilder = stringBuilder.Clear();
+			//for (var c = 0; c < textInBinary.Length;)
+			//{
+			//	var toEncodeAsString = string.Empty;
+			//	for (var r = 0; r < rows; r++)
+			//	{
+			//		if (c == textInBinary.Length)
+			//		{
+			//			toEncodeAsString += '0';
+			//			addedExtra++;
+			//		}
+			//		else
+			//		{
+			//			toEncodeAsString += textInBinary[c];
+			//			c++; // Move to the next bit.	
+			//		}
+			//	}
 
-				// 3. Encode the word.
-				var toEncodeAsList = ConvertStringToByteList(toEncodeAsString);
-				var encoded = matrixG.Encode(toEncodeAsList);
+			//	// 3. Encode the word.
+			//	var toEncodeAsList = ConvertStringToByteList(toEncodeAsString);
+			//	var encoded = matrixG.Encode(toEncodeAsList);
 
-				// 4. Send it through the channel.
-				var deformed = channel.SendVectorThrough(encoded);
+			//	// 4. Send it through the channel.
+			//	var deformed = channel.SendVectorThrough(encoded);
 
-				// 5. Decode the vector.
-				var decoded = matrixH.Decode(deformed);
+			//	// 5. Decode the vector.
+			//	var decoded = matrixH.Decode(deformed);
 
-				// 6. Get the original word.
-				var fullyDecoded = matrixG.Decode(decoded);
+			//	// 6. Get the original word.
+			//	var fullyDecoded = matrixG.Decode(decoded);
 
-				// 7. Put it all into a string.
-				stringBuilder.Append(ConvertByteListToString(fullyDecoded));
-			}
+			//	// 7. Put it all into a string.
+			//	stringBuilder.Append(ConvertByteListToString(fullyDecoded));
+			//}
 
-			textInBinary = stringBuilder.ToString();
-			var index = 0;
-			var decodedTextAsList = new List<byte>();
-			// 8. Convert it back in to numbers.
-			for (var i = 0; i < textInBinary.Length;)
-			{
-				// 8.1 Put it in to groups of 8 bits.
-				var byteAsBinaryString = string.Empty;
-				for (var c = 0; c < 8; c++)
-				{
-					if (i == textInBinary.Length)
-					{
-						//byteAsBinaryString += '0';
-						c++;
-					}
-					else
-					{
-						byteAsBinaryString += textInBinary[i];
-						i++;
-					}
-				}
+			//textInBinary = stringBuilder.ToString();
+			//var index = 0;
+			//var decodedTextAsList = new List<byte>();
+			//// 8. Convert it back in to numbers.
+			//for (var i = 0; i < textInBinary.Length;)
+			//{
+			//	// 8.1 Put it in to groups of 8 bits.
+			//	var byteAsBinaryString = string.Empty;
+			//	for (var c = 0; c < 8; c++)
+			//	{
+			//		if (i == textInBinary.Length)
+			//		{
+			//			//byteAsBinaryString += '0';
+			//			c++;
+			//		}
+			//		else
+			//		{
+			//			byteAsBinaryString += textInBinary[i];
+			//			i++;
+			//		}
+			//	}
 
-				// 8.2 Convert it to a decimal number.
-				var byteAsDecimalString = Convert.ToByte(byteAsBinaryString, 2);
-				decodedTextAsList.Add(byteAsDecimalString);
-			}
+			//	// 8.2 Convert it to a decimal number.
+			//	var byteAsDecimalString = Convert.ToByte(byteAsBinaryString, 2);
+			//	decodedTextAsList.Add(byteAsDecimalString);
+			//}
 
-			var revertedText = Encoding.ASCII.GetString(decodedTextAsList.ToArray());
-			Console.WriteLine(revertedText);
+			//var revertedText = Encoding.ASCII.GetString(decodedTextAsList.ToArray());
+			//Console.WriteLine(revertedText);
 
 			Console.ReadKey();
 		}

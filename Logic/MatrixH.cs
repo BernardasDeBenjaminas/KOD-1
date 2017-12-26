@@ -38,7 +38,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norima dekoduoti.</param>
 		/// <returns>Dekoduotas vektorius.</returns>
-		public List<byte> Decode(List<byte> vector)
+		public IList<byte> Decode(IList<byte> vector)
 		{
 			var result = Clone(vector); 
 
@@ -86,7 +86,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurio sindromą norima apskaičiuoti.</param>
 		/// <returns>Sindromas.</returns>
-		private List<byte> GetSyndrome(List<byte> vector)
+		private IList<byte> GetSyndrome(IList<byte> vector)
 		{
 			if (vector.Count != _cols)
 				throw new ArgumentException("\nPaduoto vektoriaus ilgis privalo sutapti su matricos ilgiu.");
@@ -214,7 +214,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurio reikšmes reikia nukopijuoti į atskirą vektorių.</param>
 		/// <returns>Vektorius su identiškomis reikšmėmis pateiktam vektoriui.</returns>
-		public List<byte> Clone(List<byte> vector)
+		public IList<byte> Clone(IList<byte> vector)
 		{
 			var length = vector.Count;
 			var newVector = new List<byte>(length);

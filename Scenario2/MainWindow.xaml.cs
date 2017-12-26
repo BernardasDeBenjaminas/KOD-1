@@ -458,7 +458,7 @@ namespace Scenario2
 		/// </summary>
 		/// <param name="vector">Dvejetainis vektorius.</param>
 		/// <returns>Tekstą.</returns>
-		private string ConvertBinaryVectorToText(List<byte> vector)
+		private string ConvertBinaryVectorToText(IList<byte> vector)
 		{
 			var textInBinary = ConvertByteListToString(vector);
 			var decodedTextAsList = new List<byte>();
@@ -532,7 +532,7 @@ namespace Scenario2
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norima paversti į simbolių eilutę.</param>
 		/// <returns>Simbolių eilutę, sudarytą iš 0 ir 1.</returns>
-		private static string ConvertByteListToString(List<byte> vector)
+		private static string ConvertByteListToString(IList<byte> vector)
 		{
 			var result = string.Empty;
 			foreach (var bit in vector)

@@ -27,7 +27,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurį norima siųsti kanalu.</param>
 		/// <returns>Potencialiai iškraipytas vektorius (0 tampa 1 ir atvirkščiai).</returns>
-		public List<byte> SendVectorThrough(List<byte> vector)
+		public IList<byte> SendVectorThrough(IList<byte> vector)
 		{
 			var result = Clone(vector);
 			var length = result.Count;
@@ -49,7 +49,7 @@ namespace Logic
 		/// <param name="vector1">Pirmasis vektorius palyginimui.</param>
 		/// <param name="vector2">Antrasis vektorius palyginimui.</param>
 		/// <returns>Vektorių sudarytą iš 0 ir 1.</returns>
-		public List<byte> FindDifferences(List<byte> vector1, List<byte> vector2)
+		public IList<byte> FindDifferences(IList<byte> vector1, IList<byte> vector2)
 		{
 			var length = vector1.Count;
 
@@ -72,7 +72,7 @@ namespace Logic
 		/// </summary>
 		/// <param name="vector">Vektorius, kurio reikšmes norima nukopijuoti.</param>
 		/// <returns>Vektorius su identiškomis reikšmėmis.</returns>
-		private List<byte> Clone(List<byte> vector)
+		private IList<byte> Clone(IList<byte> vector)
 		{
 			var length = vector.Count;
 			var newVector = new List<byte>(length);

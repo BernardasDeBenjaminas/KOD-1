@@ -14,7 +14,7 @@ namespace Logic
 		/// <param name="vector1">Pirmasis vektorius sudėčiai.</param>
 		/// <param name="vector2">Antrasis vektorius sudėčiai.</param>
 		/// <returns>Vektorius, kuris yra pateiktų vektorių sumos rezultatas.</returns>
-		public static List<byte> Add(List<byte> vector1, List<byte> vector2)
+		public static IList<byte> Add(IList<byte> vector1, IList<byte> vector2)
 		{
 			if (vector1.Count != vector2.Count)
 				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");
@@ -34,7 +34,7 @@ namespace Logic
 		/// <param name="vector1">Pirmasis vektorius daugybai.</param>
 		/// <param name="vector2">Antrasis vektorius daugybai.</param>
 		/// <returns>Skaičius, kuris yra pateiktų vektorių sandaugos rezultatas.</returns>
-		public static byte Multiply(List<byte> vector1, List<byte> vector2)
+		public static byte Multiply(IList<byte> vector1, IList<byte> vector2)
 		{
 			if (vector1.Count != vector2.Count)
 				throw new ArgumentException("\nVektoriai privalo būti vienodo ilgio.");

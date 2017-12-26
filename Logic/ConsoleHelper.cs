@@ -74,7 +74,7 @@ namespace Logic
 		/// <param name="introMessage">Žinutė, kurią norima spausdinti.</param>
 		/// <param name="errorVector">Vektorius, kurio reikšmės lems kokia spalva bus spausdinami 'originalVector' nariai.</param>
 		/// <param name="originalVector">Vektorius, kurio narius norima spausdinti spalvotai.</param>
-		public static void WriteChanges(string introMessage, List<byte> errorVector, List<byte> originalVector)
+		public static void WriteChanges(string introMessage, IList<byte> errorVector, IList<byte> originalVector)
 		{
 			Console.ForegroundColor = ConsoleColor.White;
 			Console.Write(introMessage);
